@@ -168,6 +168,18 @@ function normalizeEventRecord(raw: any, index: number): CampusEvent {
     mode: raw.mode || raw['Mode'] || 'Offline',
     location: (raw.location || raw['Location'] || 'Campus Venue').toString().trim(),
     registration_fee: typeof raw.registration_fee === 'number' ? raw.registration_fee : parseFloat(raw.registration_fee || '0') || 0,
+    fee_amount:
+      typeof raw.fee_amount === 'number'
+        ? raw.fee_amount
+        : Number(raw.fee_amount ?? raw['Fee Amount'] ?? 0),
+
+    department: raw.department || raw['Department'] || undefined,
+
+    tags: Array.isArray(raw.tags)
+      ? raw.tags.map((tag: unknown) => String(tag))
+      : typeof raw['Tags'] === 'string'
+        ? raw['Tags'].split(',').map((tag: string) => tag.trim()).filter(Boolean)
+        : [],
     eligibility: (raw.eligibility || raw['Eligibility'] || 'All students').toString().trim(),
     eligible_departments: raw.eligible_departments || raw['Eligible Departments'] || 'All Departments',
     participation_type: raw.participation_type || raw['Participation Type'] || 'Individual',
@@ -217,6 +229,47 @@ export function applyFiltersAndSort(
   // 2. Category Filter
   if (filters?.category && filters.category !== 'all') {
     items = items.filter((ev) => ev.category?.toLowerCase() === filters.category!.toLowerCase());
+  }
+
+  // 2b. Department Filter
+  if (filters?.department && filters.department !== 'all') {
+    const targetDept = filters.department.toLowerCase();
+    items = items.filter((ev) => {
+      const eligDepts = (ev.eligible_departments || '').toLowerCase();
+      const dept = (ev.department || '').toLowerCase();
+      const elig = (ev.eligibility || '').toLowerCase();
+      const desc = (ev.description || '').toLowerCase();
+      const name = (ev.name || '').toLowerCase();
+      const tags = Array.isArray(ev.tags) ? ev.tags.join(' ').toLowerCase() : '';
+      const fullText = `${eligDepts} ${dept} ${elig} ${desc} ${name} ${tags}`;
+
+      if (eligDepts.includes('all') || elig.includes('all students') || elig.includes('all engineering')) {
+        return true;
+      }
+
+      if (targetDept.includes('civil')) return fullText.includes('civil');
+      if (targetDept.includes('computer science') || targetDept.includes('cse')) {
+        return fullText.includes('computer') || fullText.includes('cs') || fullText.includes('cse') || fullText.includes('software');
+      }
+      if (targetDept.includes('electronics and communication') || targetDept.includes('ece')) {
+        return fullText.includes('ece') || fullText.includes('electronics') || fullText.includes('communication');
+      }
+      if (targetDept.includes('electrical and electronics') || targetDept.includes('eee')) {
+        return fullText.includes('eee') || fullText.includes('electrical');
+      }
+      if (targetDept.includes('mechanical')) return fullText.includes('mech');
+      if (targetDept.includes('artificial intelligence and data science') || targetDept.includes('ai&ds')) {
+        return fullText.includes('ai') || fullText.includes('data science') || fullText.includes('artificial intelligence');
+      }
+      if (targetDept.includes('artificial intelligence and machine learning') || targetDept.includes('aiml')) {
+        return fullText.includes('ai') || fullText.includes('machine learning') || fullText.includes('aiml');
+      }
+      if (targetDept.includes('information technology') || targetDept.includes('(it)')) {
+        return fullText.includes('information technology') || fullText.includes(' it ') || fullText.includes('/it') || fullText.includes('software');
+      }
+
+      return fullText.includes(targetDept);
+    });
   }
 
   // 3. Organizer Type Filter

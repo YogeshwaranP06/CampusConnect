@@ -49,12 +49,18 @@ export interface CampusEvent {
   mode: EventMode; // Col 11: Mode (Online, Offline, Hybrid)
   location: string; // Col 12: Venue / City / Platform
   registration_fee: number; // Col 13: Registration Fee (0 for Free)
+  fee_amount?: number;
+  fee_type?: 'Free' | 'Paid';
+  department?: string;
+  tags?: string[];
   eligibility: string; // Col 14: Eligibility (e.g., All UG/PG students)
   eligible_departments?: string; // Col 15: Eligible Departments
-  participation_type: ParticipationType; // Col 16: Participation Type
+  participation_type?: ParticipationType; // Col 16: Participation Type
   min_team_size?: number; // Col 17: Min Team Size
   max_team_size?: number; // Col 18: Max Team Size
+  max_participants?: number;
   prize_pool?: string; // Col 19: Prize Information
+  prizes_summary?: string;
   official_url?: string; // Col 20: Official Website URL
   registration_url: string; // Col 21: Official Registration URL
   banner_url?: string; // Col 22: Direct Poster Image URL
@@ -75,6 +81,7 @@ export interface CampusEvent {
 export interface EventFilterState {
   searchQuery: string;
   category: string;
+  department?: string;
   organizerType: string;
   level: string; // 'all' | 'National' | 'International' | 'State Level' | 'College Level'
   mode: string;

@@ -1,0 +1,6 @@
+{
+  "name": "CampusConnect",
+  "description": "College events, hackathons, symposiums, workshops, and opportunities discovery platform for students and event coordinators.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

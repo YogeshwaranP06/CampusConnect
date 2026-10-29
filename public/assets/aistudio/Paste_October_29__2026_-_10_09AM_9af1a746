@@ -1,0 +1,1014 @@
+# PROJECT: CAMPUSCONNECT — COLLEGE EVENTS & OPPORTUNITIES DISCOVERY PLATFORM
+
+Act as a senior full-stack software engineer, UI/UX designer, database architect, and application security engineer.
+
+Build a modern, responsive, production-oriented web application for a college Event Coordinating Team. The platform helps students discover events and opportunities published by colleges, universities, companies, and other organizations.
+
+The application must contain TWO SEPARATE WEB PORTALS:
+
+1. STUDENT PORTAL — Public-facing website for discovering events and opportunities.
+2. EVENT TEAM PORTAL — Private administration website for the authorized college Event Coordinating Team.
+
+Both portals must share the same database, event data model, visual identity, and application infrastructure.
+
+The primary event-editing interface must be Google Sheets. Authorized event coordinators maintain the master spreadsheet. A Google Apps Script integration synchronizes valid spreadsheet records into the database. Students must never need an account to browse events.
+
+Do not build only a static UI mockup. Build a functional application with reusable components, realistic sample data, proper routing, responsive layouts, loading states, error states, and a clear integration structure for the backend.
+
+==================================================
+1. PRODUCT OBJECTIVE
+==================================================
+
+Create a centralized platform where college students can discover:
+
+- College symposiums.
+- Technical symposiums.
+- Hackathons.
+- Coding competitions.
+- Project expos.
+- Technical workshops.
+- Non-technical workshops.
+- Conferences.
+- Paper presentation competitions.
+- Poster presentation competitions.
+- Ideathons.
+- Innovation challenges.
+- Robotics competitions.
+- Electronics and embedded systems competitions.
+- AI and machine learning events.
+- Semiconductor and VLSI events.
+- Space technology and aerospace events.
+- Cultural festivals.
+- Sports events.
+- Online webinars.
+- Company-hosted technical events.
+- Internship opportunities.
+- Industrial training programs.
+- Career development programs.
+- Student innovation programs.
+- Other academic and professional opportunities.
+
+Events may originate from:
+
+- Our own college.
+- Other colleges.
+- Universities.
+- Educational institutions.
+- Private companies.
+- Startups.
+- Government organizations.
+- Research institutions.
+- Professional societies.
+- Other legitimate organizations.
+
+The interface must clearly identify the organizer and organizer type.
+
+The application should be suitable for real-world deployment and future expansion.
+
+==================================================
+2. APPLICATION ARCHITECTURE
+==================================================
+
+Use a maintainable, modular architecture.
+
+Preferred technology stack:
+
+Frontend:
+- Next.js with TypeScript.
+- React.
+- Tailwind CSS.
+- shadcn/ui where appropriate.
+- Lucide icons.
+- Responsive layouts for desktop, tablet, and mobile.
+
+Backend and database:
+- Supabase PostgreSQL.
+- Supabase Auth for authorized event team administrators.
+- Supabase Storage for event posters when needed.
+- Server-side APIs or server actions for protected operations.
+
+Spreadsheet integration:
+- Google Sheets as the master event-management spreadsheet.
+- Google Apps Script for synchronization.
+- A protected server-side sync endpoint or another secure integration mechanism.
+- Automatic synchronization and validation.
+- Upsert records using a stable Event ID to prevent duplicates.
+
+Deployment:
+- Prepare the application for deployment on Vercel.
+- Keep secrets in environment variables.
+- Provide an `.env.example` file with placeholder values only.
+
+IMPORTANT ARCHITECTURAL REQUIREMENTS:
+
+- The student portal must be public.
+- The event team portal must be separately accessible through its own route or deployment.
+- Prefer a monorepo structure that can later support two independent Next.js applications sharing types and utilities.
+- If AI Studio cannot generate a complete monorepo or two independently deployable applications in one generation, build a well-structured single Next.js application first, with separate `/` and `/team` route groups. Keep the components and services modular so the portals can later be extracted into separate deployments without redesigning the system.
+- Both portals must use the same backend and event records.
+- Never expose database service-role keys or other privileged credentials in client-side code.
+- Do not claim that an external service is connected until its credentials and integration have actually been configured.
+
+Suggested future deployment:
+
+Student portal: public student-facing domain.
+
+Event team portal: separate team-facing domain.
+
+Use environment variables for URLs. Do not hardcode example domains as actual production domains.
+
+==================================================
+3. DESIGN DIRECTION
+==================================================
+
+Create a premium, polished, modern university technology platform.
+
+Visual inspiration:
+- Modern SaaS dashboards.
+- University innovation portals.
+- Contemporary event-discovery platforms.
+- Clean editorial layouts.
+- Professional technology community websites.
+
+Visual style:
+- Light background.
+- Dark navy or near-black text.
+- Indigo or electric blue as the primary accent.
+- Subtle gradients used sparingly.
+- Soft borders.
+- Rounded cards.
+- Balanced whitespace.
+- Clear typography.
+- High-quality event posters.
+- Consistent iconography.
+- Smooth but restrained transitions.
+- Excellent mobile usability.
+
+Avoid:
+- Outdated college website designs.
+- Excessive gradients.
+- Too many bright colors.
+- Cluttered dashboards.
+- Oversized decorative graphics that obscure content.
+- Fake statistics presented as real operational data.
+- Unnecessary animations.
+- Generic layouts with no visual hierarchy.
+
+Use a consistent design system across both portals while giving each portal a layout appropriate to its audience.
+
+Create a temporary brand identity called "CampusConnect". Keep the name, logo treatment, colors, and institution information easy to change later.
+
+==================================================
+4. STUDENT PORTAL — PUBLIC WEBSITE
+==================================================
+
+Build the following pages and features.
+
+A. HOME PAGE
+
+Create a polished landing page containing:
+
+1. Navigation bar:
+   - Brand logo and name.
+   - Home.
+   - Explore Events.
+   - Hackathons.
+   - Workshops.
+   - Competitions.
+   - Conferences.
+   - Opportunities.
+   - Search icon or search input.
+   - Responsive mobile navigation.
+
+2. Hero section:
+   - Strong headline about discovering opportunities.
+   - Supporting text explaining the platform.
+   - Primary CTA: Explore Events.
+   - Secondary CTA: Browse Opportunities.
+   - Attractive but restrained visual treatment.
+
+Suggested headline:
+"Discover Events. Build Skills. Create Opportunities."
+
+Suggested supporting text:
+"Find hackathons, symposiums, workshops, competitions, conferences, and career opportunities from colleges, universities, companies, and organizations."
+
+3. Featured events:
+   - Show events marked as featured in the database.
+   - Display poster, title, organizer, category, date, mode, and location.
+   - Provide a View Details action.
+
+4. Upcoming events:
+   - Prioritize upcoming events.
+   - Display clear dates and registration deadlines.
+   - Visually distinguish events happening soon.
+
+5. Explore by category:
+   - Hackathons.
+   - Symposiums.
+   - Workshops.
+   - Competitions.
+   - Conferences.
+   - Technology events.
+   - Cultural events.
+   - Career opportunities.
+
+6. Explore by organizer:
+   - Our College.
+   - Other Colleges.
+   - Universities.
+   - Companies.
+   - Startups.
+   - Government Organizations.
+   - Research Institutions.
+
+7. Closing section:
+   - Encourage students to explore upcoming opportunities.
+
+8. Footer:
+   - About.
+   - Contact.
+   - Event submission/contact information.
+   - Privacy Policy.
+   - Terms.
+   - Official social links when configured.
+
+Do not fabricate actual institutional contact information or official social media accounts.
+
+B. EXPLORE EVENTS PAGE
+
+Create a complete event discovery interface.
+
+Include:
+- Search by event name.
+- Search by organizer.
+- Search by keyword.
+- Category filters.
+- Organizer type filters.
+- Date filters.
+- Online, offline, and hybrid filters.
+- Location filters.
+- Free and paid event filters.
+- Eligibility filters where supported.
+- Registration deadline filters.
+- Upcoming and closing-soon sorting.
+- Featured-only filter.
+- Clear all filters.
+- Responsive event cards.
+- Grid/list display options if practical.
+- Pagination or reliable incremental loading.
+
+The search and filters must work with actual database results when Supabase is configured.
+
+Use URL query parameters for relevant search and filter states so students can share filtered event listings.
+
+Show useful empty states when no events match.
+
+C. CATEGORY PAGES
+
+Create category pages for:
+- Hackathons.
+- Symposiums.
+- Workshops.
+- Competitions.
+- Conferences.
+- Technical Events.
+- Cultural Events.
+- Career Opportunities.
+- Internships.
+- Training Programs.
+
+Each page must use the same event data source and apply the relevant category filter.
+
+D. EVENT DETAILS PAGE
+
+Each event must have a dedicated details page.
+
+Display:
+- Event poster.
+- Event title.
+- Organizer name.
+- Organizer type.
+- Category.
+- Full description.
+- Start date.
+- End date.
+- Registration deadline.
+- Event mode.
+- Venue or online platform description.
+- Location.
+- Registration fee.
+- Eligibility.
+- Eligible departments or fields.
+- Individual or team participation.
+- Minimum and maximum team size, when available.
+- Prize information, when available.
+- Contact information, when available.
+- Official event website.
+- Official registration URL.
+- Last updated timestamp, where available.
+
+Provide a prominent "Register on Official Website" button.
+
+The registration button must open the supplied external registration URL safely in a new tab where appropriate.
+
+Validate URLs and reject unsafe schemes such as `javascript:`.
+
+If the registration deadline has passed, clearly mark registration as closed or past deadline. Do not incorrectly claim registration is open.
+
+If an event is cancelled or archived, do not present it as an ordinary upcoming event.
+
+Show related events based on category, organizer, or timing.
+
+Never invent missing event details. Hide optional fields when their values are absent.
+
+E. OPPORTUNITIES PAGE
+
+Create a dedicated page for:
+- Internships.
+- Industrial training.
+- Research opportunities.
+- Company programs.
+- Technical fellowships.
+- Student challenges.
+- Career development programs.
+
+Include useful filters for:
+- Organization.
+- Opportunity type.
+- Eligibility.
+- Location.
+- Remote or in-person.
+- Application deadline.
+
+Use the same shared event database, with a clear distinction between events and opportunities.
+
+F. PUBLIC ACCESS
+
+Students must not need:
+- Login.
+- Account creation.
+- Passwords.
+- Mandatory personal information.
+
+Do not create a student login system.
+
+Do not require students to submit personal information merely to browse events.
+
+==================================================
+5. EVENT TEAM PORTAL — PRIVATE ADMINISTRATION
+==================================================
+
+Create a separate administrative experience at `/team` initially.
+
+The team portal must be protected by authentication and server-side authorization.
+
+A. ADMIN LOGIN
+
+Create a professional login page.
+
+Fields:
+- Email.
+- Password.
+
+Features:
+- Show/hide password.
+- Input validation.
+- Loading state.
+- Helpful error messages.
+- Secure logout.
+- Session-aware redirects.
+
+Use Supabase Auth.
+
+There must be NO public administrator registration page.
+
+Do not implement a hardcoded universal password or a fake authentication mechanism as production security.
+
+If Supabase credentials are missing, show a clear development setup message rather than pretending that authentication is working.
+
+B. ADMIN DASHBOARD
+
+Create a dashboard with:
+- Total published events.
+- Upcoming events.
+- Events closing soon.
+- Featured events.
+- Events by category.
+- Events by organizer type.
+- Latest synchronization status.
+- Last successful sync.
+- Number of rows processed during the latest sync.
+- Number of validation failures.
+- Recent synchronization errors.
+
+All operational statistics must come from real data when the backend is connected.
+
+For a development preview, clearly label sample statistics as demo data.
+
+C. GOOGLE SHEETS SYNCHRONIZATION MONITOR
+
+Create a dedicated synchronization page showing:
+- Connected spreadsheet status.
+- Spreadsheet identifier, if configured.
+- Last synchronization timestamp.
+- Last successful synchronization.
+- Rows processed.
+- Rows inserted.
+- Rows updated.
+- Rows skipped.
+- Validation failures.
+- Recent error messages.
+- Sync history.
+
+Include a "Sync Now" button only when a secure manual synchronization endpoint is configured.
+
+The button must trigger the actual synchronization operation. If integration is not configured, show a useful setup message.
+
+Do not falsely report a successful sync.
+
+D. EVENT DATA OVERVIEW
+
+The event team should be able to:
+- View synchronized events.
+- Search events.
+- Filter by status, category, organizer, and date.
+- View complete event details.
+- View the source spreadsheet row identifier.
+- See the last synchronization time.
+- Identify invalid or missing fields.
+- See whether an event is published, draft, archived, or cancelled.
+
+Google Sheets remains the primary editing interface.
+
+Do not build a competing full event-entry workflow that requires coordinators to enter the same event twice.
+
+E. POSTER MANAGEMENT
+
+Support:
+- Publicly accessible image URLs.
+- Google Drive image references.
+- Supabase Storage images when configured.
+
+For Google Drive images:
+- Do not assume every Drive URL is publicly viewable.
+- Normalize supported share links when possible.
+- Verify that the resulting image can actually be loaded.
+- Explain that private Drive files require appropriate sharing permissions or a server-side authenticated integration.
+- Do not expose private Google credentials.
+
+Show an image preview and a useful fallback if the poster is unavailable.
+
+F. FEATURED EVENTS
+
+Provide a way for authorized administrators to view and manage featured-event status.
+
+Keep this consistent with the master spreadsheet.
+
+Prefer updating the appropriate spreadsheet field through a secure integration if spreadsheet ownership is the source of truth.
+
+If bidirectional synchronization is not implemented, clearly explain that featured-event edits must be made in Google Sheets instead of silently changing only the database.
+
+G. SETTINGS AND ACCOUNT
+
+Include:
+- Admin profile.
+- Session information.
+- Sign out.
+- Integration configuration status.
+- Environment/setup checklist.
+
+Do not display secret keys.
+
+==================================================
+6. GOOGLE SHEETS MASTER DATABASE
+==================================================
+
+Google Sheets is the main interface through which the Event Coordinating Team maintains event information.
+
+Create documentation for a master spreadsheet with the following columns:
+
+1. Event ID
+2. Event Name
+3. Organizer Name
+4. Organizer Type
+5. Category
+6. Event Type
+7. Description
+8. Start Date
+9. End Date
+10. Registration Deadline
+11. Mode
+12. Location
+13. Registration Fee
+14. Eligibility
+15. Eligible Departments
+16. Participation Type
+17. Minimum Team Size
+18. Maximum Team Size
+19. Prize Information
+20. Official Event URL
+21. Registration URL
+22. Banner URL
+23. Google Drive File Reference
+24. Contact Email
+25. Contact Phone
+26. Status
+27. Featured
+28. Last Updated
+
+Supported Organizer Type values:
+- Our College.
+- Other College.
+- University.
+- Company.
+- Startup.
+- Government Organization.
+- Research Institution.
+- Professional Society.
+- Other.
+
+Supported Mode values:
+- Online.
+- Offline.
+- Hybrid.
+
+Supported Status values:
+- Published.
+- Draft.
+- Archived.
+- Cancelled.
+
+Use data validation/dropdown lists in Google Sheets where appropriate.
+
+The Event ID must be stable and unique.
+
+Generate an ID for new events if the team does not supply one, but preserve existing IDs during updates.
+
+Do not use the event name alone as a unique identifier.
+
+Spreadsheet workflow:
+
+1. An authorized coordinator creates or edits an event in Google Sheets.
+2. The synchronization process reads the spreadsheet.
+3. The system validates required fields and URLs.
+4. Valid rows are inserted or updated in Supabase using Event ID.
+5. Invalid rows are reported in the synchronization log.
+6. Valid rows with Status = Published appear on the student portal after synchronization.
+7. Draft, Archived, and Cancelled records must not appear as ordinary published upcoming events.
+8. Deleting a spreadsheet row must not automatically destroy the database record without a documented deletion or archival policy.
+
+AUTOMATIC PUBLISHING REQUIREMENT:
+
+The team must not need to manually approve each event after entering it.
+
+Once an event has valid required fields and is marked Published, it should become available to students automatically after synchronization.
+
+For convenience, the spreadsheet template may default new rows to Published, but invalid records must never be published.
+
+Draft should remain available for events that are not ready.
+
+A spreadsheet edit must not be assumed to appear instantly unless the synchronization method actually guarantees that. Clearly define the synchronization trigger and expected delay.
+
+==================================================
+7. GOOGLE APPS SCRIPT INTEGRATION
+==================================================
+
+Prepare a Google Apps Script implementation and setup instructions.
+
+The integration should:
+- Read the master spreadsheet.
+- Validate headers.
+- Read event rows.
+- Normalize dates and values.
+- Generate IDs for new records when necessary.
+- Validate required fields.
+- Validate registration and official website URLs.
+- Validate supported category, organizer type, mode, and status values.
+- Synchronize valid rows to a protected backend endpoint.
+- Upsert using Event ID.
+- Report successful inserts and updates.
+- Report skipped rows and validation failures.
+- Maintain synchronization logs.
+- Include retry handling for temporary failures.
+- Support scheduled synchronization using a time-driven trigger.
+- Support an optional edit-trigger strategy only when appropriate for the spreadsheet's permissions and deployment model.
+
+Do not rely exclusively on a simple on-edit trigger if that would be unreliable for bulk edits or API-driven changes.
+
+Use a secure backend endpoint for privileged database writes.
+
+SECURITY REQUIREMENTS:
+- Keep the backend sync secret in Google Apps Script Properties or another secure server-side secret store.
+- Never place service-role keys in the student frontend.
+- Do not place privileged keys in publicly accessible source code.
+- Authenticate and authorize every sync request.
+- Verify that the caller is authorized to synchronize events.
+- Add request validation and reasonable payload limits.
+- Prevent duplicate events with database constraints.
+- Record errors without logging passwords, tokens, or secret values.
+- Avoid overwriting newer database data with older synchronization results where timestamps can help detect stale updates.
+
+Provide complete setup instructions for:
+1. Creating the Google Sheet.
+2. Adding the Apps Script.
+3. Configuring script properties.
+4. Configuring the Supabase project.
+5. Deploying the protected sync endpoint.
+6. Setting the synchronization interval.
+7. Testing an event insert.
+8. Testing an event update.
+9. Testing invalid rows.
+10. Confirming the event appears on the student portal.
+
+Do not claim Google Sheets is connected until the user has configured the required permissions, identifiers, secrets, and deployment.
+
+==================================================
+8. DATABASE DESIGN
+==================================================
+
+Design a clean Supabase PostgreSQL schema.
+
+Create an `events` table with fields corresponding to the spreadsheet columns.
+
+Recommended additional fields:
+- id: internal UUID primary key.
+- event_id: unique external identifier.
+- source_row_id: optional spreadsheet row reference.
+- created_at.
+- updated_at.
+- synced_at.
+- published_at.
+- content_hash, if useful for detecting unchanged records.
+
+Use suitable types:
+- UUID for internal primary keys.
+- Text for names and descriptions.
+- Timestamptz or carefully normalized date types for event dates and timestamps.
+- Numeric for registration fees.
+- Boolean for featured.
+- Constrained values or validated text for status, mode, category, and organizer type.
+
+Design synchronization tables such as:
+- `sync_runs`.
+- `sync_errors`.
+
+Include fields that allow the administration portal to report:
+- Start and completion timestamps.
+- Sync status.
+- Rows processed.
+- Rows inserted.
+- Rows updated.
+- Rows skipped.
+- Errors.
+
+Create appropriate indexes for:
+- Event ID.
+- Status.
+- Start date.
+- Registration deadline.
+- Category.
+- Organizer type.
+- Featured status.
+
+Avoid unnecessary duplication.
+
+Provide SQL migrations or a complete SQL schema file.
+
+DATABASE SECURITY:
+
+Implement Row Level Security policies.
+
+Public users must only be able to read events that are published and otherwise eligible for public display.
+
+Public users must not be able to:
+- Insert events.
+- Update events.
+- Delete events.
+- Read private synchronization errors.
+- Read admin profiles.
+- Read private integration configuration.
+
+Only authorized server-side processes and authorized administrators may perform protected operations.
+
+Never trust a client-side role flag as the sole authorization mechanism.
+
+Protect all admin endpoints with real server-side authentication and role checks.
+
+Use the minimum necessary database permissions.
+
+==================================================
+9. EVENT VALIDATION RULES
+==================================================
+
+Implement a shared validation layer.
+
+At minimum, validate:
+- Event ID is present or can be safely generated.
+- Event Name is present.
+- Organizer Name is present.
+- Category is valid.
+- Start Date is valid.
+- End Date is valid if supplied.
+- Registration Deadline is valid if supplied.
+- Required dates are in a consistent format.
+- End Date is not before Start Date.
+- URL fields use supported HTTP or HTTPS schemes.
+- Mode is valid.
+- Status is valid.
+- Fee is non-negative.
+- Team size values are valid and consistent.
+- Featured has a valid boolean value.
+
+Support optional fields without rejecting otherwise valid events.
+
+Do not automatically reject an event simply because its date is in the past; classify it appropriately according to the event status and publication rules.
+
+Do not publish rows with missing mandatory fields.
+
+Provide useful row-specific validation messages.
+
+==================================================
+10. SEARCH AND FILTER IMPLEMENTATION
+==================================================
+
+Implement reusable search and filtering logic.
+
+Search fields:
+- Event Name.
+- Organizer Name.
+- Description.
+- Category.
+- Location.
+- Eligible Departments.
+
+Filters:
+- Category.
+- Organizer Type.
+- Event Mode.
+- Start Date.
+- Registration Deadline.
+- Location.
+- Fee.
+- Eligibility.
+- Participation Type.
+- Featured status.
+
+Sort options:
+- Upcoming First.
+- Registration Closing Soon.
+- Recently Added.
+- Alphabetical.
+
+Ensure filters can be combined.
+
+The student portal must query published records only.
+
+Optimize database access and avoid fetching the entire event database unnecessarily.
+
+Include sensible pagination.
+
+==================================================
+11. RESPONSIVE DESIGN AND ACCESSIBILITY
+==================================================
+
+The application must work well on:
+- Android phones.
+- iPhones.
+- Tablets.
+- Laptops.
+- Desktop monitors.
+
+Ensure:
+- Mobile navigation works.
+- Cards adapt to screen size.
+- Filters are usable on small screens.
+- Tables become responsive.
+- Forms have clear labels.
+- Buttons have accessible names.
+- Color contrast is sufficient.
+- Keyboard navigation is supported.
+- Loading indicators are visible.
+- Empty states and errors are understandable.
+
+Do not use hover-only interactions for essential actions.
+
+==================================================
+12. SAMPLE DATA
+==================================================
+
+Populate the initial development preview with realistic but explicitly fictional sample events.
+
+Include at least 12 diverse sample records, such as:
+- Technical symposium.
+- AI hackathon.
+- Robotics workshop.
+- Semiconductor design workshop.
+- National-level project competition.
+- Research conference.
+- Coding competition.
+- Space technology webinar.
+- Electronics design challenge.
+- Internship opportunity.
+- Industrial training program.
+- Innovation challenge.
+
+Use clear sample labels or fictional organizer names.
+
+Do not present fictional events as real college events.
+
+Do not fabricate actual registration URLs, official event announcements, prizes, contact details, or confirmed dates.
+
+Make it easy to remove all demo data when connecting the production database.
+
+==================================================
+13. PROJECT STRUCTURE AND CODE QUALITY
+==================================================
+
+Use a maintainable project structure.
+
+Separate:
+- Student-facing pages.
+- Team/admin pages.
+- Shared UI components.
+- Shared event types.
+- Validation logic.
+- Database services.
+- Authentication utilities.
+- Synchronization status services.
+- Environment configuration.
+- API handlers.
+- SQL migrations.
+- Google Apps Script integration.
+- Documentation.
+- Tests.
+
+Use TypeScript types consistently.
+
+Avoid:
+- One enormous component.
+- Duplicated business logic.
+- Fake API calls presented as real.
+- Hardcoded secrets.
+- Unexplained placeholder functions.
+- Insecure admin access.
+- Silent synchronization failures.
+- Unnecessary dependencies.
+
+Add useful comments where security or synchronization logic is non-obvious.
+
+==================================================
+14. TESTING
+==================================================
+
+Prepare tests for:
+- Event validation.
+- Unique Event ID handling.
+- Duplicate prevention.
+- Event insertion.
+- Event updates.
+- Draft visibility.
+- Published-event visibility.
+- Archived-event visibility.
+- Cancelled-event visibility.
+- Search and filters.
+- Invalid URLs.
+- Missing required fields.
+- Registration deadlines.
+- Unauthorized admin access.
+- Unauthorized synchronization requests.
+- Synchronization error reporting.
+
+Expected behavior:
+
+A valid Published event appears on the student portal after a successful sync.
+
+A Draft event never appears in public event listings.
+
+An invalid row is reported and is not published.
+
+Updating an existing Event ID updates the existing database record rather than creating a duplicate.
+
+An unauthorized visitor cannot access the team dashboard.
+
+A failed synchronization is reported as failed, not successful.
+
+A missing integration configuration produces an informative setup message.
+
+==================================================
+15. DOCUMENTATION AND DELIVERABLES
+==================================================
+
+Generate:
+
+1. Complete application source code.
+2. Student portal.
+3. Team portal.
+4. Shared event data model.
+5. Supabase SQL schema and RLS policies.
+6. Environment variable example file.
+7. Google Apps Script source code.
+8. Sample Google Sheets column template.
+9. Setup documentation.
+10. Local development instructions.
+11. Deployment instructions.
+12. Authentication configuration instructions.
+13. Synchronization configuration instructions.
+14. Testing instructions.
+15. Troubleshooting guide.
+16. Security checklist.
+17. Clear separation between completed functionality and integrations requiring configuration.
+
+Create a README containing commands for:
+- Installing dependencies.
+- Starting local development.
+- Running tests.
+- Applying database migrations.
+- Configuring Supabase.
+- Configuring Google Sheets synchronization.
+- Deploying the application.
+
+Never include real API keys or passwords.
+
+==================================================
+16. IMPLEMENTATION PRIORITIES
+==================================================
+
+Implement in this order:
+
+PHASE 1 — FOUNDATION
+- Project setup.
+- Shared data model.
+- Design system.
+- Responsive navigation.
+- Student home page.
+- Event cards.
+- Event listing.
+- Search and filtering.
+- Event details.
+
+PHASE 2 — BACKEND
+- Supabase integration.
+- Database schema.
+- Public published-event queries.
+- Data validation.
+- Pagination.
+- Demo-data separation.
+
+PHASE 3 — ADMIN PORTAL
+- Login.
+- Protected team dashboard.
+- Event overview.
+- Synchronization monitor.
+- Error reporting.
+- Admin account management.
+
+PHASE 4 — GOOGLE SHEETS
+- Apps Script.
+- Secure sync endpoint.
+- Automatic synchronization.
+- Upsert logic.
+- Error logs.
+- Setup documentation.
+
+PHASE 5 — PRODUCTION READINESS
+- Security review.
+- Database policy verification.
+- Automated tests.
+- Responsive testing.
+- Accessibility checks.
+- Deployment preparation.
+
+Do not stop after generating the homepage.
+
+If the complete system is too large to generate reliably in one pass, first create a working, well-structured foundation and then continue implementing the remaining phases without discarding the existing code.
+
+==================================================
+17. FINAL INSTRUCTIONS
+==================================================
+
+Start by generating the application.
+
+Prioritize a visually excellent student portal and a consistent admin portal while preserving the architecture required for real Google Sheets synchronization and Supabase integration.
+
+Use demo data only for the development preview.
+
+Clearly distinguish between:
+- Features that work immediately.
+- Features that work with configured Supabase credentials.
+- Features that require Google Apps Script deployment and permissions.
+- Features that are still placeholders.
+
+Do not simulate a real synchronization, login, or database write when the relevant service is not configured.
+
+At the end, provide:
+1. A summary of generated features.
+2. The project structure.
+3. A list of environment variables required.
+4. The database setup steps.
+5. The Google Sheets integration steps.
+6. The features that are functional now.
+7. The features that still require configuration.
+8. The recommended next implementation step.
+
+Build this as a real, maintainable college events platform, not merely a visual prototype.

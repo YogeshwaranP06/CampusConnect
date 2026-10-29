@@ -35,6 +35,19 @@ export const VALID_CATEGORIES: EventCategory[] = [
   'Other',
 ];
 
+export const SRM_TRP_DEPARTMENTS = [
+  'B.E.-Civil Engineering',
+  'B.E.-Computer Science and Engineering',
+  'B.E.-Electronics and Communications Engineering',
+  'B.E.-Electrical and Electronics Engineering',
+  'B.E.-Mechanical Engineering',
+  'B.E CSE (Artificial Intelligence and Machine Learning)',
+  'B.Tech-Artificial Intelligence and Data Science',
+  'B.Tech (Information Technology)',
+] as const;
+
+export type DepartmentName = typeof SRM_TRP_DEPARTMENTS[number];
+
 export const VALID_MODES: EventMode[] = ['Online', 'Offline', 'Hybrid'];
 export const VALID_STATUSES: EventStatus[] = ['Published', 'Draft', 'Archived', 'Cancelled'];
 export const VALID_PARTICIPATION: ParticipationType[] = ['Individual', 'Team', 'Both'];

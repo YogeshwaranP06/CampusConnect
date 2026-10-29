@@ -34,6 +34,7 @@ interface ExploreEventsProps {
 const DEFAULT_FILTERS: EventFilterState = {
   searchQuery: '',
   category: 'all',
+  department: 'all',
   organizerType: 'all',
   level: 'all',
   mode: 'all',

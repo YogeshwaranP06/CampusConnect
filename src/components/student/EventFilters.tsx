@@ -1,6 +1,6 @@
 import React from 'react';
 import { EventFilterState } from '../../types/event';
-import { VALID_CATEGORIES, VALID_ORGANIZER_TYPES, VALID_EVENT_LEVELS } from '../../utils/validation';
+import { VALID_CATEGORIES, VALID_ORGANIZER_TYPES, VALID_EVENT_LEVELS, SRM_TRP_DEPARTMENTS } from '../../utils/validation';
 import { Search, RotateCcw, Sparkles } from 'lucide-react';
 
 interface EventFiltersProps {
@@ -19,6 +19,7 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
   const isFiltered =
     filters.searchQuery !== '' ||
     filters.category !== 'all' ||
+    (filters.department && filters.department !== 'all') ||
     filters.organizerType !== 'all' ||
     (filters.level && filters.level !== 'all') ||
     filters.mode !== 'all' ||
@@ -61,7 +62,7 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
       </div>
 
       {/* Filter Controls Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 pt-2 border-t border-slate-100 text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3 pt-2 border-t border-slate-100 text-xs">
         {/* Category */}
         <div className="space-y-1">
           <label className="text-[11px] font-bold uppercase tracking-wider text-[#475569]">
@@ -76,6 +77,25 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
             {VALID_CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {c}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Department */}
+        <div className="space-y-1">
+          <label className="text-[11px] font-bold uppercase tracking-wider text-[#475569]">
+            Department
+          </label>
+          <select
+            value={filters.department || 'all'}
+            onChange={(e) => onChange({ department: e.target.value })}
+            className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[#111827] focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-600 font-medium"
+          >
+            <option value="all">All Departments</option>
+            {SRM_TRP_DEPARTMENTS.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept}
               </option>
             ))}
           </select>

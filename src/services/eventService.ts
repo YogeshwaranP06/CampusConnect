@@ -233,42 +233,71 @@ export function applyFiltersAndSort(
 
   // 2b. Department Filter
   if (filters?.department && filters.department !== 'all') {
-    const targetDept = filters.department.toLowerCase();
+    const normalize = (value: string) =>
+      value
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+
+    const targetDept = normalize(filters.department);
+
     items = items.filter((ev) => {
-      const eligDepts = (ev.eligible_departments || '').toLowerCase();
-      const dept = (ev.department || '').toLowerCase();
-      const elig = (ev.eligibility || '').toLowerCase();
-      const desc = (ev.description || '').toLowerCase();
-      const name = (ev.name || '').toLowerCase();
-      const tags = Array.isArray(ev.tags) ? ev.tags.join(' ').toLowerCase() : '';
-      const fullText = `${eligDepts} ${dept} ${elig} ${desc} ${name} ${tags}`;
+      const eligibleDepartments = normalize(ev.eligible_departments || '');
+      const eligibility = normalize(ev.eligibility || '');
 
-      if (eligDepts.includes('all') || elig.includes('all students') || elig.includes('all engineering')) {
-        return true;
-      }
+      // Only explicit, broad eligibility statements bypass department matching.
+      const allowsAllDepartments =
+        /\ball departments\b|\ball branches\b|\ball engineering branches\b|\ball engineering students\b|\ball students\b/.test(
+          `${eligibleDepartments} ${eligibility}`
+        );
 
-      if (targetDept.includes('civil')) return fullText.includes('civil');
-      if (targetDept.includes('computer science') || targetDept.includes('cse')) {
-        return fullText.includes('computer') || fullText.includes('cs') || fullText.includes('cse') || fullText.includes('software');
-      }
-      if (targetDept.includes('electronics and communication') || targetDept.includes('ece')) {
-        return fullText.includes('ece') || fullText.includes('electronics') || fullText.includes('communication');
-      }
-      if (targetDept.includes('electrical and electronics') || targetDept.includes('eee')) {
-        return fullText.includes('eee') || fullText.includes('electrical');
-      }
-      if (targetDept.includes('mechanical')) return fullText.includes('mech');
-      if (targetDept.includes('artificial intelligence and data science') || targetDept.includes('ai&ds')) {
-        return fullText.includes('ai') || fullText.includes('data science') || fullText.includes('artificial intelligence');
-      }
-      if (targetDept.includes('artificial intelligence and machine learning') || targetDept.includes('aiml')) {
-        return fullText.includes('ai') || fullText.includes('machine learning') || fullText.includes('aiml');
-      }
-      if (targetDept.includes('information technology') || targetDept.includes('(it)')) {
-        return fullText.includes('information technology') || fullText.includes(' it ') || fullText.includes('/it') || fullText.includes('software');
-      }
+      if (allowsAllDepartments) return true;
 
-      return fullText.includes(targetDept);
+      // Prefer the explicit eligible-departments field.
+      // Fall back to the eligibility statement only when that field is empty.
+      const source = eligibleDepartments || eligibility;
+      if (!source) return false;
+
+      const aliases: Record<string, string[]> = {
+        'b e civil engineering': ['civil', 'civil engineering'],
+        'b e computer science and engineering': [
+          'cse',
+          'computer science',
+          'computer science and engineering',
+        ],
+        'b e electronics and communications engineering': [
+          'ece',
+          'electronics and communication',
+          'electronics and communications',
+        ],
+        'b e electrical and electronics engineering': [
+          'eee',
+          'electrical and electronics',
+        ],
+        'b e mechanical engineering': ['mechanical', 'mechanical engineering'],
+        'b e cse artificial intelligence and machine learning': [
+          'aiml',
+          'artificial intelligence and machine learning',
+        ],
+        'b tech artificial intelligence and data science': [
+          'ai and ds',
+          'artificial intelligence and data science',
+        ],
+        'b tech information technology': ['information technology'],
+      };
+
+      const terms = aliases[targetDept] || [targetDept];
+
+      return terms.some((term) => {
+        const normalizedTerm = normalize(term);
+        return (
+          source === normalizedTerm ||
+          source.includes(` ${normalizedTerm} `) ||
+          source.startsWith(`${normalizedTerm} `) ||
+          source.endsWith(` ${normalizedTerm}`)
+        );
+      });
     });
   }
 

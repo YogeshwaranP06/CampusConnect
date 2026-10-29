@@ -1,7 +1,6 @@
 import React from 'react';
 import { CampusEvent } from '../../types/event';
 import { HeroSection } from './HeroSection';
-import { EventCard } from './EventCard';
 import { 
   Code2, 
   Presentation, 
@@ -10,9 +9,7 @@ import {
   BookOpen, 
   Cpu, 
   Sparkles, 
-  Briefcase, 
-  ArrowRight,
-  Building2
+  Briefcase 
 } from 'lucide-react';
 
 interface StudentHomeProps {
@@ -35,29 +32,11 @@ const CATEGORY_ITEMS = [
   { name: 'Cultural Events', desc: 'Arts, music & stage fests', icon: Sparkles, count: 'Inter-College', accent: 'bg-rose-50 text-rose-700' },
 ];
 
-const ORGANIZER_TYPES = [
-  'Our College',
-  'Other College',
-  'University',
-  'Company',
-  'Startup',
-  'Government Organization',
-  'Research Institution',
-  'Professional Society',
-];
-
 export const StudentHome: React.FC<StudentHomeProps> = ({
   events,
-  onSelectEvent,
   onNavigate,
   onSearch,
-  savedIds,
-  onToggleSave,
 }) => {
-  const upcomingEvents = [...events]
-    .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
-    .slice(0, 6);
-
   return (
     <div className="bg-white space-y-16 pb-20">
       {/* Hero Section: Pure White Background (#FFFFFF) */}
@@ -88,6 +67,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
             {CATEGORY_ITEMS.map((item) => {
               const Icon = item.icon;
+              const activeCount = events.filter((e) => e.category.toLowerCase() === item.name.toLowerCase()).length;
               return (
                 <div
                   key={item.name}
@@ -99,7 +79,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                       <Icon className="w-5 h-5" />
                     </div>
                     <span className="text-[11px] font-mono text-[#64748b]">
-                      {item.count}
+                      {activeCount > 0 ? `${activeCount} Active` : 'Upcoming'}
                     </span>
                   </div>
                   <div className="mt-5">
@@ -113,100 +93,6 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
                 </div>
               );
             })}
-          </div>
-        </div>
-      </section>
-
-      {/* Upcoming Events Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-10 pb-4 border-b border-slate-200">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#64748b] block mb-1">
-              Timeline & Deadlines
-            </span>
-            <h2 className="font-display text-3xl sm:text-4xl font-light text-[#111827] tracking-tight">
-              Upcoming Opportunities & Events
-            </h2>
-          </div>
-          <button
-            onClick={() => onNavigate('events')}
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1.5 cursor-pointer pb-1"
-          >
-            <span>See full calendar</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {upcomingEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              onSelect={onSelectEvent}
-              isSaved={savedIds.includes(event.id)}
-              onToggleSave={onToggleSave}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Verified Host Directory */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-[#0f172a] rounded-3xl p-8 sm:p-12 text-white overflow-hidden relative border border-slate-800">
-          <div className="relative z-10 max-w-2xl space-y-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-              Verified Host Directory
-            </span>
-            <h2 className="font-display text-3xl sm:text-4xl font-light tracking-tight text-white">
-              Institutional Hosts & Enterprise Partners
-            </h2>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              Every listing originates from accredited collegiate institutions, tier-1 tech enterprises, or recognized engineering bodies. Click any host tier to browse matching symposiums.
-            </p>
-          </div>
-
-          <div className="relative z-10 mt-8 flex flex-wrap gap-3">
-            {ORGANIZER_TYPES.map((orgType) => {
-              const count = events.filter(
-                (e) => e.organizer_type?.toLowerCase() === orgType.toLowerCase()
-              ).length;
-              return (
-                <button
-                  key={orgType}
-                  type="button"
-                  onClick={() => onNavigate('events', undefined, orgType)}
-                  className="group px-4 py-2.5 rounded-full bg-slate-800 hover:bg-indigo-600 active:scale-95 text-xs font-medium text-slate-200 hover:text-white transition-all duration-150 border border-slate-700 hover:border-indigo-600 flex items-center gap-2.5 cursor-pointer shadow-xs"
-                >
-                  <Building2 className="w-3.5 h-3.5 text-indigo-400 group-hover:text-white transition-colors shrink-0" />
-                  <span>{orgType}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-700 group-hover:bg-white/20 text-slate-300 group-hover:text-white transition-colors">
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Closing Call to Action: Clean Light-Grey Card with Purple Accent Button */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="p-8 sm:p-12 rounded-3xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
-          <div className="space-y-2 max-w-xl">
-            <h3 className="font-display text-2xl sm:text-3xl font-light text-[#111827]">
-              Are you an Event Coordinator or Club Lead?
-            </h3>
-            <p className="text-sm text-[#475569] leading-relaxed">
-              Submit your symposiums, competitions, or workshops to the official SRM TRP student coordinating council via Google Sheets. Verified listings appear on CampusConnect automatically.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={() => onNavigate('events')}
-              className="px-7 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-full transition-all cursor-pointer shadow-sm active:scale-98"
-            >
-              Browse All Events
-            </button>
           </div>
         </div>
       </section>

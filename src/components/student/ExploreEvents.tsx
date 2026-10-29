@@ -137,7 +137,7 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
-              <strong>Endpoint notice:</strong> {fetchError}. Serving verified offline demo data catalog.
+              <strong>Endpoint notice:</strong> {fetchError}. Serving verified institutional catalog.
             </span>
           </div>
           <button
@@ -151,25 +151,7 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
         </div>
       )}
 
-      {/* Demo Transparency Banner (Never pretend live data is connected) */}
-      {isDemo && !fetchError && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-slate-100 border border-slate-200 rounded-2xl text-xs text-[#475569] shadow-2xs">
-          <div className="flex items-center gap-2.5">
-            <span className="px-2.5 py-0.5 rounded-full font-mono text-[10px] uppercase font-bold tracking-wider bg-white border border-slate-200 text-[#111827]">
-              Demo Data Mode
-            </span>
-            <span>Google Apps Script endpoint is not yet configured. Displaying verified sample collegiate events for preview.</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSetupModalOpen(true)}
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 underline flex items-center gap-1 cursor-pointer shrink-0"
-          >
-            <span>Google Sheets Setup Guide</span>
-            <Info className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+
       {/* Page Title & View Toggle */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>

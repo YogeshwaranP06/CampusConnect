@@ -27,7 +27,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   return (
     <section className="relative overflow-hidden bg-white border-b border-slate-200">
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
+      {/* College Campus Background Image */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center sm:bg-right bg-no-repeat"
+        style={{ backgroundImage: `url('/srm-trp-campus.jpg')` }}
+      />
+      {/* Light Gradient Overlay to maintain crystal-clear typography & contrast */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-r from-white via-white/90 to-white/55 sm:to-white/40" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
         <div className="max-w-3xl space-y-7">
           {/* Eyebrow Label with subtle purple/indigo accent */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-semibold tracking-wider uppercase text-slate-800">

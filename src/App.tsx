@@ -117,7 +117,7 @@ export default function App() {
     : [];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#F7F9FC] text-[#111827] selection:bg-indigo-500 selection:text-white">
       {/* Top Navbar: Student Navigation & Database Status */}
       <Navbar
         activeView={activeView}

@@ -34,21 +34,29 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-6 h-18">
-            {/* Wordmark with SRM TRP Engineering College Branding */}
-            <div className="flex items-center gap-3 shrink-0">
+            {/* Wordmark with SRM TRP Engineering College Branding & Logo */}
+            <div className="flex items-center gap-3.5 shrink-0">
               <button
                 onClick={() => handleNavClick('home')}
-                className="text-left group cursor-pointer focus-visible:outline-none"
+                className="flex items-center gap-3 text-left group cursor-pointer focus-visible:outline-none"
               >
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shrink-0" />
-                  <span className="font-display text-2xl font-light tracking-tight text-[#111827] group-hover:text-indigo-600 transition-colors">
-                    CampusConnect
+                <img
+                  src="/srm-trp-logo.png"
+                  alt="SRM TRP Engineering College"
+                  className="h-10 sm:h-11 w-auto object-contain shrink-0"
+                />
+                <div className="h-8 w-px bg-slate-200 hidden sm:block" />
+                <div className="hidden sm:block">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
+                    <span className="font-display text-xl sm:text-2xl font-light tracking-tight text-[#111827] group-hover:text-indigo-600 transition-colors">
+                      CampusConnect
+                    </span>
+                  </div>
+                  <span className="block text-[10px] tracking-wider uppercase font-semibold text-[#64748b] pl-3.5">
+                    Student Event Portal
                   </span>
                 </div>
-                <span className="block text-[10px] tracking-wider uppercase font-semibold text-[#64748b] pl-4.5">
-                  SRM TRP Engineering College
-                </span>
               </button>
             </div>
 
@@ -56,31 +64,28 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
             <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-[#475569]">
               <button
                 onClick={() => handleNavClick('home')}
-                className={`whitespace-nowrap shrink-0 transition-colors py-1 cursor-pointer ${
-                  activeView === 'home'
+                className={`whitespace-nowrap shrink-0 transition-colors py-1 cursor-pointer ${activeView === 'home'
                     ? 'text-indigo-600 font-semibold'
                     : 'hover:text-[#111827]'
-                }`}
+                  }`}
               >
                 Home
               </button>
               <button
                 onClick={() => handleNavClick('events')}
-                className={`whitespace-nowrap shrink-0 transition-colors py-1 cursor-pointer ${
-                  activeView === 'events'
+                className={`whitespace-nowrap shrink-0 transition-colors py-1 cursor-pointer ${activeView === 'events'
                     ? 'text-indigo-600 font-semibold'
                     : 'hover:text-[#111827]'
-                }`}
+                  }`}
               >
                 Events
               </button>
               <button
                 onClick={() => handleNavClick('internships')}
-                className={`whitespace-nowrap shrink-0 transition-colors py-1 cursor-pointer ${
-                  activeView === 'internships'
+                className={`whitespace-nowrap shrink-0 transition-colors py-1 cursor-pointer ${activeView === 'internships'
                     ? 'text-indigo-600 font-semibold'
                     : 'hover:text-[#111827]'
-                }`}
+                  }`}
               >
                 Internships
               </button>
@@ -118,15 +123,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
               <button
                 onClick={() => setSetupModalOpen(true)}
                 title="View Google Sheets Data Source Status"
-                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full border transition-all cursor-pointer ${
-                  dataSourceStatus.isConfigured
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-full border transition-all cursor-pointer ${dataSourceStatus.isConfigured
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
                     : 'bg-slate-100 text-[#475569] border-slate-200 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 shrink-0 text-[#475569]" />
                 <span>
-                  {dataSourceStatus.isConfigured ? 'Google Sheets Live' : 'Demo Catalog'}
+                  {dataSourceStatus.isConfigured ? 'Google Sheets Live' : 'Verified Drives'}
                 </span>
                 <Info className="w-3 h-3 text-[#64748b]" />
               </button>
@@ -157,25 +161,22 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
           <div className="md:hidden border-b border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2">
             <button
               onClick={() => handleNavClick('home')}
-              className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
-                activeView === 'home' ? 'bg-slate-100 text-indigo-600 font-semibold' : 'text-[#475569]'
-              }`}
+              className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${activeView === 'home' ? 'bg-slate-100 text-indigo-600 font-semibold' : 'text-[#475569]'
+                }`}
             >
               Home
             </button>
             <button
               onClick={() => handleNavClick('events')}
-              className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
-                activeView === 'events' ? 'bg-slate-100 text-indigo-600 font-semibold' : 'text-[#475569]'
-              }`}
+              className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${activeView === 'events' ? 'bg-slate-100 text-indigo-600 font-semibold' : 'text-[#475569]'
+                }`}
             >
               Events
             </button>
             <button
               onClick={() => handleNavClick('internships')}
-              className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
-                activeView === 'internships' ? 'bg-slate-100 text-indigo-600 font-semibold' : 'text-[#475569]'
-              }`}
+              className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${activeView === 'internships' ? 'bg-slate-100 text-indigo-600 font-semibold' : 'text-[#475569]'
+                }`}
             >
               Internships
             </button>
@@ -214,7 +215,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 text-[#475569]" />
                 <span>
-                  {dataSourceStatus.isConfigured ? 'Google Sheets Live' : 'Demo Data Mode'}
+                  {dataSourceStatus.isConfigured ? 'Google Sheets Live' : 'Verified Drives'}
                 </span>
                 <Info className="w-3 h-3 text-[#64748b]" />
               </button>

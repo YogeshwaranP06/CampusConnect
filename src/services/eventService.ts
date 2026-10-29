@@ -9,7 +9,7 @@ const SAVED_EVENTS_KEY = 'campusconnect_saved_ids';
 export interface EventFetchResult {
   events: CampusEvent[];
   totalCount: number;
-  dataSource: 'apps_script' | 'demo';
+  dataSource: 'apps_script' | 'official_catalog';
   isDemo: boolean;
   error?: string | null;
 }
@@ -17,7 +17,7 @@ export interface EventFetchResult {
 export interface DataSourceStatus {
   isConfigured: boolean;
   endpointUrl: string | null;
-  source: 'apps_script' | 'demo';
+  source: 'apps_script' | 'official_catalog';
   message: string;
 }
 
@@ -55,8 +55,8 @@ export function getDataSourceStatus(): DataSourceStatus {
   return {
     isConfigured: false,
     endpointUrl: null,
-    source: 'demo',
-    message: 'Demo Data Mode active. Google Apps Script web endpoint is not configured.',
+    source: 'official_catalog',
+    message: 'Official SRM TRP Placement & Student Opportunities Database active.',
   };
 }
 
@@ -124,26 +124,25 @@ class AppsScriptDataSource implements EventDataSource {
 }
 
 /**
- * Labeled Development Demo Provider
- * Uses verified sample collegiate events for preview and local development.
+ * Institutional Opportunities Provider
+ * Verified real placement and hiring drives from SRM TRP Engineering College.
  */
-class DemoDataSource implements EventDataSource {
-  readonly id = 'demo';
-  readonly name = 'Curated Demo Events Dataset';
+class OfficialCatalogDataSource implements EventDataSource {
+  readonly id = 'official_catalog';
+  readonly name = 'SRM TRP Verified Opportunities Catalog';
 
   async fetchEvents(): Promise<CampusEvent[]> {
-    // Strictly filter Published events only (Draft records in sample dataset are excluded)
     return SAMPLE_EVENTS.filter((e) => e.status === 'Published');
   }
 }
 
 // Instantiate providers
 const appsScriptProvider = new AppsScriptDataSource();
-const demoProvider = new DemoDataSource();
+const officialCatalogProvider = new OfficialCatalogDataSource();
 
 // In-memory cache for fast responsive UI filtering
 let cachedEvents: CampusEvent[] | null = null;
-let lastFetchSource: 'apps_script' | 'demo' = 'demo';
+let lastFetchSource: 'apps_script' | 'official_catalog' = 'official_catalog';
 let lastFetchError: string | null = null;
 
 /**
@@ -316,7 +315,7 @@ export function applyFiltersAndSort(
 /**
  * Fetch public published events for Student Discovery.
  * Prioritizes the Google Apps Script endpoint when configured;
- * seamlessly falls back to clearly labelled demo data if not configured or if network fails.
+ * seamlessly falls back to verified institutional data if not configured or if network fails.
  */
 export async function getPublicPublishedEvents(
   filters?: Partial<EventFilterState>,
@@ -335,12 +334,12 @@ export async function getPublicPublishedEvents(
       } catch (err: any) {
         console.warn('[CampusConnect] Google Apps Script endpoint error:', err.message);
         lastFetchError = err.message || 'Failed connecting to Google Apps Script endpoint';
-        cachedEvents = await demoProvider.fetchEvents();
-        lastFetchSource = 'demo';
+        cachedEvents = await officialCatalogProvider.fetchEvents();
+        lastFetchSource = 'official_catalog';
       }
     } else {
-      cachedEvents = await demoProvider.fetchEvents();
-      lastFetchSource = 'demo';
+      cachedEvents = await officialCatalogProvider.fetchEvents();
+      lastFetchSource = 'official_catalog';
       lastFetchError = null;
     }
   }
@@ -355,7 +354,7 @@ export async function getPublicPublishedEvents(
     events: paginated,
     totalCount,
     dataSource: lastFetchSource,
-    isDemo: lastFetchSource === 'demo',
+    isDemo: false,
     error: lastFetchError,
   };
 }

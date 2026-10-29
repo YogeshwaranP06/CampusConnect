@@ -56,8 +56,8 @@ export const EventCard: React.FC<EventCardProps> = ({
     }
   }
 
-  const feeDisplay =
-    event.registration_fee === 0 ? 'Free' : `$${event.registration_fee}`;
+  const fee = typeof event.registration_fee === 'number' ? event.registration_fee : (event.fee_amount || 0);
+  const feeDisplay = fee === 0 ? 'Free' : `₹${fee}`;
 
   return (
     <article

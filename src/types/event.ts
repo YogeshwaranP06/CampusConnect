@@ -63,6 +63,8 @@ export interface CampusEvent {
   prizes_summary?: string;
   official_url?: string; // Col 20: Official Website URL
   registration_url: string; // Col 21: Official Registration URL
+  has_valid_registration_url?: boolean; // Validation flag for valid HTTP/HTTPS form link
+  date_warnings?: string[]; // Date sequence / format warnings
   banner_url?: string; // Col 22: Direct Poster Image URL
   drive_file_ref?: string; // Col 23: Google Drive File Link / ID
   contact_email?: string; // Col 24: Contact Email

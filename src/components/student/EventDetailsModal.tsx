@@ -393,12 +393,30 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                       <span>{isPastDeadline ? 'Registration Closed' : 'Register on Official Website'}</span>
                       {!isPastDeadline && <ExternalLink className="w-4 h-4" />}
                     </a>
+                  ) : safeOfficialUrl ? (
+                    <a
+                      href={safeOfficialUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-4 px-6 text-sm font-medium rounded-full bg-slate-900 hover:bg-slate-800 text-white transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
+                    >
+                      <span>Visit Official Event Page</span>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  ) : event.contact_email ? (
+                    <a
+                      href={`mailto:${event.contact_email}?subject=Inquiry regarding ${encodeURIComponent(event.name)}`}
+                      className="w-full py-4 px-6 text-sm font-medium rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                    >
+                      <Mail className="w-4 h-4" />
+                      <span>Contact Organizer for Details</span>
+                    </a>
                   ) : (
                     <button
                       disabled
                       className="w-full py-4 px-6 text-sm font-medium rounded-full bg-slate-100 text-slate-400 cursor-not-allowed"
                     >
-                      Registration Unavailable
+                      Registration Link Pending
                     </button>
                   )}
 
@@ -730,12 +748,30 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 <span>{isPastDeadline ? 'Registration Closed' : 'Register on Official Website'}</span>
                 {!isPastDeadline && <ExternalLink className="w-3.5 h-3.5" />}
               </a>
+            ) : safeOfficialUrl ? (
+              <a
+                href={safeOfficialUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-2.5 text-xs font-medium rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition-all flex items-center justify-center gap-1.5 flex-1 sm:flex-none cursor-pointer active:scale-98"
+              >
+                <span>Official Page</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            ) : event.contact_email ? (
+              <a
+                href={`mailto:${event.contact_email}?subject=Inquiry regarding ${encodeURIComponent(event.name)}`}
+                className="px-6 py-2.5 text-xs font-medium rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center justify-center gap-1.5 flex-1 sm:flex-none cursor-pointer active:scale-98"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Contact Organizer</span>
+              </a>
             ) : (
               <button
                 disabled
                 className="px-6 py-2.5 text-xs font-medium rounded-full bg-slate-100 text-slate-400 cursor-not-allowed"
               >
-                Registration Unavailable
+                Registration Link Pending
               </button>
             )}
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CampusEvent, EventFilterState } from '../../types/event';
 import { getPublicPublishedEvents } from '../../services/eventService';
 import { EventFilters } from './EventFilters';
@@ -24,6 +24,7 @@ import { DataSourceSetupModal } from '../common/DataSourceSetupModal';
 interface ExploreEventsProps {
   initialCategory?: string;
   initialOrganizerType?: string;
+  initialDepartment?: string;
   initialQuery?: string;
   isCoreOnly?: boolean;
   onSelectEvent: (event: CampusEvent) => void;
@@ -49,6 +50,7 @@ const DEFAULT_FILTERS: EventFilterState = {
 export const ExploreEvents: React.FC<ExploreEventsProps> = ({
   initialCategory,
   initialOrganizerType,
+  initialDepartment,
   initialQuery,
   isCoreOnly = false,
   onSelectEvent,
@@ -58,6 +60,7 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
   const [filters, setFilters] = useState<EventFilterState>({
     ...DEFAULT_FILTERS,
     category: initialCategory || 'all',
+    department: initialDepartment || 'all',
     organizerType: initialOrganizerType || 'all',
     searchQuery: initialQuery || '',
     coreOnly: isCoreOnly,
@@ -71,8 +74,12 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
   const [events, setEvents] = useState<CampusEvent[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isDemo, setIsDemo] = useState(true);
+  const [isStale, setIsStale] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [setupModalOpen, setSetupModalOpen] = useState(false);
+
+  const isRefreshingRef = useRef(false);
+  const lastVisibilityRefreshTime = useRef(Date.now());
 
   useEffect(() => {
     setFilters((prev) => ({ ...prev, coreOnly: isCoreOnly }));
@@ -83,6 +90,11 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
     setFilters((prev) => ({ ...prev, category: initialCategory || 'all' }));
     setPage(1);
   }, [initialCategory]);
+
+  useEffect(() => {
+    setFilters((prev) => ({ ...prev, department: initialDepartment || 'all' }));
+    setPage(1);
+  }, [initialDepartment]);
 
   useEffect(() => {
     setFilters((prev) => ({ ...prev, organizerType: initialOrganizerType || 'all' }));
@@ -97,6 +109,8 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
   }, [initialQuery]);
 
   const loadEvents = (forceRefresh: boolean = false) => {
+    if (isRefreshingRef.current) return;
+    isRefreshingRef.current = true;
     setLoading(true);
 
     getPublicPublishedEvents(filters, page, pageSize, forceRefresh)
@@ -104,18 +118,90 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
         setEvents(res.events);
         setTotalCount(res.totalCount);
         setIsDemo(res.isDemo);
+        setIsStale(Boolean(res.isStale));
         setFetchError(res.error || null);
         setLoading(false);
+        isRefreshingRef.current = false;
       })
       .catch((err) => {
         console.error('Error fetching events:', err);
         setFetchError(err.message || 'Error connecting to events data source');
         setLoading(false);
+        isRefreshingRef.current = false;
       });
   };
 
   useEffect(() => {
-    loadEvents(false);
+    let active = true;
+    const abortController = new AbortController();
+
+    const refreshEvents = async (forceRefresh = false) => {
+      // Prevent overlapping concurrent requests
+      if (isRefreshingRef.current) return;
+      isRefreshingRef.current = true;
+
+      try {
+        setLoading(true);
+
+        const result = await getPublicPublishedEvents(
+          filters,
+          page,
+          pageSize,
+          forceRefresh,
+          abortController.signal
+        );
+
+        if (!active) return;
+
+        setEvents(result.events);
+        setTotalCount(result.totalCount);
+        setIsDemo(result.isDemo);
+        setIsStale(Boolean(result.isStale));
+        setFetchError(result.error || null);
+      } catch (error: unknown) {
+        if (!active || (error instanceof Error && error.name === 'AbortError')) return;
+
+        console.error('Error refreshing events:', error);
+        setFetchError(
+          error instanceof Error
+            ? error.message
+            : 'Unable to load events.'
+        );
+        setEvents([]);
+        setTotalCount(0);
+      } finally {
+        isRefreshingRef.current = false;
+        if (active) setLoading(false);
+      }
+    };
+
+    // Initial load for current filters/page (uses in-memory cache if within 60s)
+    void refreshEvents(false);
+
+    // Refresh live data every 60 seconds
+    const intervalId = window.setInterval(() => {
+      void refreshEvents(true);
+    }, 60_000);
+
+    // Refresh when student returns to this browser tab (minimum 30s cooldown)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        if (now - lastVisibilityRefreshTime.current >= 30_000) {
+          lastVisibilityRefreshTime.current = now;
+          void refreshEvents(true);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      active = false;
+      abortController.abort();
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [filters, page]);
 
   const handleFilterChange = (updated: Partial<EventFilterState>) => {
@@ -138,7 +224,8 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
-              <strong>Endpoint notice:</strong> {fetchError}. Serving verified institutional catalog.
+              <strong>Google Sheets connection issue:</strong> {fetchError}.
+              Live event data may be unavailable. Sample events are not being shown.
             </span>
           </div>
           <button
@@ -152,6 +239,16 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
         </div>
       )}
 
+
+      {/* Stale Cache Notice during temporary upstream degradation */}
+      {isStale && !fetchError && (
+        <div className="flex items-center gap-2.5 p-3.5 bg-blue-50 border border-blue-200 rounded-2xl text-xs text-blue-900 shadow-2xs">
+          <Info className="w-4 h-4 text-blue-600 shrink-0" />
+          <span>
+            <strong>Offline cache active:</strong> Serving cached event catalog while reconnecting to live database.
+          </span>
+        </div>
+      )}
 
       {/* Page Title & View Toggle */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

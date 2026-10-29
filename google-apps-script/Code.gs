@@ -98,7 +98,7 @@ function getPublishedEvents() {
     return "";
   };
 
-  const publishedEvents = [];
+  const eventsById = new Map();
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -115,37 +115,60 @@ function getPublishedEvents() {
       continue;
     }
 
-    // 2. Validate required student fields
+    // 2. Validate required student fields (do not discard valid events just because registration URL is pending)
     const name = (getColValue(row, "Event Name", "name", "Title") || "").toString().trim();
-    const registrationUrl = (getColValue(row, "Registration URL", "registration_url", "Register Link") || "").toString().trim();
+    const rawRegUrl = (getColValue(row, "Registration URL", "registration_url", "Register Link") || "").toString().trim();
+    const rawOfficialUrl = (getColValue(row, "Official Event URL", "official_url", "Website") || "").toString().trim();
     const startDateRaw = getColValue(row, "Start Date", "start_date", "Date");
 
-    if (!name || name.length < 3 || !registrationUrl || !startDateRaw) {
-      // Skip incomplete or broken event entries
+    if (!name || name.length < 2 || !startDateRaw) {
+      // Skip empty or severely malformed rows
       continue;
     }
 
-    // 3. Format dates safely to ISO strings
-    const formatDate = (val) => {
-      if (!val) return "";
+    // 3. Format dates safely to ISO strings and check consistency
+    const parseDateSafe = (val) => {
+      if (!val) return null;
       if (val instanceof Date && !isNaN(val.getTime())) {
-        return val.toISOString();
+        return val;
       }
       const parsed = new Date(val);
-      return !isNaN(parsed.getTime()) ? parsed.toISOString() : val.toString();
+      return !isNaN(parsed.getTime()) ? parsed : null;
     };
 
-    const startDate = formatDate(startDateRaw);
-    const endDate = formatDate(getColValue(row, "End Date", "end_date"));
-    const regDeadline = formatDate(getColValue(row, "Registration Deadline", "registration_deadline", "Deadline"));
+    const parsedStart = parseDateSafe(startDateRaw);
+    const startDate = parsedStart ? parsedStart.toISOString() : new Date().toISOString();
+    const parsedEnd = parseDateSafe(getColValue(row, "End Date", "end_date"));
+    const endDate = parsedEnd ? parsedEnd.toISOString() : undefined;
+    const parsedDeadline = parseDateSafe(getColValue(row, "Registration Deadline", "registration_deadline", "Deadline"));
+    const regDeadline = parsedDeadline ? parsedDeadline.toISOString() : undefined;
 
-    // 4. Stable Event ID
+    const dateWarnings = [];
+    if (parsedStart && parsedDeadline && parsedDeadline.getTime() > parsedStart.getTime()) {
+      dateWarnings.push("Registration deadline is scheduled after the event start date.");
+    }
+    if (parsedStart && parsedEnd && parsedEnd.getTime() < parsedStart.getTime()) {
+      dateWarnings.push("End date is scheduled earlier than the event start date.");
+    }
+
+    // 4. Validate registration & official URLs (accept HTTP/HTTPS; reject dead #)
+    const isValidHttpUrl = (url) => {
+      if (!url || typeof url !== "string") return false;
+      const trimmed = url.trim();
+      return (trimmed.indexOf("http://") === 0 || trimmed.indexOf("https://") === 0) && trimmed !== "#";
+    };
+
+    const hasValidRegUrl = isValidHttpUrl(rawRegUrl);
+    const registrationUrl = hasValidRegUrl ? rawRegUrl : "";
+    const officialUrl = isValidHttpUrl(rawOfficialUrl) ? rawOfficialUrl : undefined;
+
+    // 5. Stable Event ID
     let eventId = (getColValue(row, "Event ID", "event_id", "ID") || "").toString().trim();
     if (!eventId) {
       eventId = "CC-" + new Date().getFullYear() + "-" + ("000" + rowNumber).slice(-4);
     }
 
-    // 5. Registration fee normalization (number, 0 for free)
+    // 6. Registration fee normalization (number, 0 for free)
     const feeRaw = getColValue(row, "Registration Fee", "registration_fee", "Fee");
     let registrationFee = 0;
     if (feeRaw !== "" && feeRaw !== null && feeRaw !== undefined) {
@@ -155,19 +178,21 @@ function getPublishedEvents() {
       }
     }
 
-    // 6. Featured boolean
+    // 7. Featured boolean
     const featuredRaw = getColValue(row, "Featured", "featured");
     const isFeatured = featuredRaw === true || 
                        String(featuredRaw).trim().toLowerCase() === "true" || 
                        String(featuredRaw).trim().toLowerCase() === "yes" || 
                        String(featuredRaw).trim() === "1";
 
-    // 7. Team sizes
+    // 8. Team sizes
     const minSizeRaw = parseInt(getColValue(row, "Minimum Team Size", "min_team_size", "Min Team Size"), 10);
     const maxSizeRaw = parseInt(getColValue(row, "Maximum Team Size", "max_team_size", "Max Team Size"), 10);
 
-    // 8. Construct clean, whitelisted public student event object
-    // Sensitive or internal spreadsheet columns are intentionally not included
+    const lastUpdatedDate = parseDateSafe(getColValue(row, "Last Updated", "last_updated"));
+    const lastUpdated = lastUpdatedDate ? lastUpdatedDate.toISOString() : new Date().toISOString();
+
+    // 9. Construct clean, whitelisted public student event object
     const event = {
       id: "apps-script-" + eventId.toLowerCase().replace(/[^a-z0-9_-]/g, "-"),
       event_id: eventId,
@@ -179,8 +204,9 @@ function getPublishedEvents() {
       event_type: (getColValue(row, "Event Type", "event_type") || "Event").toString().trim(),
       description: (getColValue(row, "Description", "description") || "").toString().trim(),
       start_date: startDate,
-      end_date: endDate || undefined,
-      registration_deadline: regDeadline || undefined,
+      end_date: endDate,
+      registration_deadline: regDeadline,
+      date_warnings: dateWarnings.length > 0 ? dateWarnings : undefined,
       mode: (getColValue(row, "Mode", "mode") || "Offline").toString().trim(),
       location: (getColValue(row, "Location", "location", "Venue") || "Campus Venue").toString().trim(),
       registration_fee: registrationFee,
@@ -190,23 +216,35 @@ function getPublishedEvents() {
       min_team_size: !isNaN(minSizeRaw) ? minSizeRaw : undefined,
       max_team_size: !isNaN(maxSizeRaw) ? maxSizeRaw : undefined,
       prize_pool: (getColValue(row, "Prize Information", "prize_pool", "Prizes") || "").toString().trim() || undefined,
-      official_url: (getColValue(row, "Official Event URL", "official_url", "Website") || "").toString().trim() || undefined,
+      official_url: officialUrl,
       registration_url: registrationUrl,
+      has_valid_registration_url: hasValidRegUrl,
       banner_url: (getColValue(row, "Banner URL", "banner_url", "Poster URL") || "").toString().trim() || undefined,
       drive_file_ref: (getColValue(row, "Google Drive File Reference", "drive_file_ref", "Drive Link") || "").toString().trim() || undefined,
       contact_email: (getColValue(row, "Contact Email", "contact_email") || "").toString().trim() || undefined,
       contact_phone: (getColValue(row, "Contact Phone", "contact_phone") || "").toString().trim() || undefined,
       status: "Published",
       featured: isFeatured,
-      last_updated: formatDate(getColValue(row, "Last Updated", "last_updated")) || new Date().toISOString(),
+      last_updated: lastUpdated,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
-    publishedEvents.push(event);
+    // 10. Deduplicate by normalized event_id (prefer newest record)
+    const dedupKey = eventId.toLowerCase();
+    if (eventsById.has(dedupKey)) {
+      const existing = eventsById.get(dedupKey);
+      const existingTime = new Date(existing.last_updated || 0).getTime();
+      const newTime = new Date(event.last_updated || 0).getTime();
+      if (newTime >= existingTime) {
+        eventsById.set(dedupKey, event);
+      }
+    } else {
+      eventsById.set(dedupKey, event);
+    }
   }
 
-  return publishedEvents;
+  return Array.from(eventsById.values());
 }
 
 /**

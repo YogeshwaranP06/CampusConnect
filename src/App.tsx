@@ -16,6 +16,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<AppView>('home');
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const [selectedOrganizerType, setSelectedOrganizerType] = useState<string | undefined>(undefined);
+  const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
   
   // Public Data State
@@ -52,12 +53,14 @@ export default function App() {
       const params = new URLSearchParams(queryPart || '');
       const cat = params.get('cat') || undefined;
       const org = params.get('org') || undefined;
+      const dept = params.get('dept') || undefined;
       const q = params.get('q') || '';
 
       if (viewPart.startsWith('events') || viewPart.startsWith('explore')) {
         setActiveView('events');
         setSelectedCategory(cat);
         setSelectedOrganizerType(org);
+        setSelectedDepartment(dept);
         setSearchQuery(q);
       } else if (viewPart.startsWith('internships') || viewPart.startsWith('opportunities')) {
         setActiveView('internships');
@@ -65,6 +68,7 @@ export default function App() {
         setActiveView('core');
         setSelectedCategory(cat);
         setSelectedOrganizerType(org);
+        setSelectedDepartment(dept);
         setSearchQuery(q);
       } else if (viewPart.startsWith('saved')) {
         setActiveView('saved');
@@ -78,14 +82,16 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  const handleNavigate = (view: AppView, category?: string, organizerType?: string) => {
+  const handleNavigate = (view: AppView, category?: string, organizerType?: string, department?: string) => {
     setActiveView(view);
     setSelectedCategory(category);
     setSelectedOrganizerType(organizerType);
+    setSelectedDepartment(department);
     if (view === 'events' || view === 'core') {
       const params = new URLSearchParams();
       if (category) params.set('cat', category);
       if (organizerType) params.set('org', organizerType);
+      if (department) params.set('dept', department);
       const str = params.toString();
       window.location.hash = str ? `${view}?${str}` : view;
     } else {
@@ -142,6 +148,7 @@ export default function App() {
           <ExploreEvents
             initialCategory={selectedCategory}
             initialOrganizerType={selectedOrganizerType}
+            initialDepartment={selectedDepartment}
             initialQuery={searchQuery}
             isCoreOnly={false}
             onSelectEvent={setSelectedModalEvent}
@@ -163,6 +170,7 @@ export default function App() {
           <ExploreEvents
             initialCategory={selectedCategory}
             initialOrganizerType={selectedOrganizerType}
+            initialDepartment={selectedDepartment}
             initialQuery={searchQuery}
             isCoreOnly={true}
             onSelectEvent={setSelectedModalEvent}

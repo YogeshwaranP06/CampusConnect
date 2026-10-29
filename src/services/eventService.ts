@@ -1,7 +1,10 @@
 import { CampusEvent, EventFilterState } from '../types/event';
 import { SAMPLE_EVENTS } from '../data/sampleEvents';
+import { isValidHttpUrl } from '../utils/driveUrl';
 
 const SAVED_EVENTS_KEY = 'campusconnect_saved_ids';
+const API_ENDPOINT = '/api/events';
+const CLIENT_CACHE_TTL_MS = 60_000; // 60 seconds memory cache
 
 /**
  * Result structure returned by event discovery queries
@@ -9,141 +12,205 @@ const SAVED_EVENTS_KEY = 'campusconnect_saved_ids';
 export interface EventFetchResult {
   events: CampusEvent[];
   totalCount: number;
-  dataSource: 'apps_script' | 'official_catalog';
+  dataSource: 'api_proxy' | 'apps_script' | 'official_catalog';
   isDemo: boolean;
+  isStale?: boolean;
   error?: string | null;
 }
 
 export interface DataSourceStatus {
   isConfigured: boolean;
   endpointUrl: string | null;
-  source: 'apps_script' | 'official_catalog';
+  source: 'api_proxy' | 'apps_script' | 'official_catalog';
   message: string;
 }
 
-/**
- * Modular Data Source Interface
- * Enables Google Apps Script for the current phase, while allowing
- * Firestore, Supabase, or custom REST APIs to be plugged in effortlessly.
- */
-export interface EventDataSource {
-  readonly id: string;
-  readonly name: string;
-  fetchEvents(): Promise<CampusEvent[]>;
-}
+// In-memory cache for fast navigation without repeated network requests
+let cachedEvents: CampusEvent[] | null = null;
+let lastFetchTimestamp = 0;
+let lastFetchSource: 'api_proxy' | 'official_catalog' = 'api_proxy';
+let lastFetchError: string | null = null;
+let isLastFetchStale = false;
 
-// Read endpoint URL from Vite environment variables
-const rawEndpointUrl = (import.meta.env.VITE_APPS_SCRIPT_URL as string | undefined)?.trim() || '';
+// In-flight promise deduplication: concurrent calls share a single request
+let inFlightFetchPromise: Promise<{ events: CampusEvent[]; isStale: boolean }> | null = null;
 
-export const isAppsScriptConfigured = Boolean(
-  rawEndpointUrl &&
-  rawEndpointUrl.startsWith('https://script.google.com/macros/s/') &&
-  !rawEndpointUrl.includes('YOUR_DEPLOYMENT_ID') &&
-  !rawEndpointUrl.includes('placeholder')
-);
+export const isAppsScriptConfigured = true;
 
 export function getDataSourceStatus(): DataSourceStatus {
-  if (isAppsScriptConfigured) {
-    return {
-      isConfigured: true,
-      endpointUrl: rawEndpointUrl,
-      source: 'apps_script',
-      message: 'Connected to live Google Apps Script web endpoint.',
-    };
-  }
-
   return {
-    isConfigured: false,
-    endpointUrl: null,
-    source: 'official_catalog',
-    message: 'Official SRM TRP Placement & Student Opportunities Database active.',
+    isConfigured: true,
+    endpointUrl: API_ENDPOINT,
+    source: 'api_proxy',
+    message: 'Connected to CampusConnect serverless event API.',
   };
 }
 
 /**
- * Google Apps Script Web App Provider (Read-Only HTTP GET)
+ * Safe date parser: checks whether string/number/Date can be resolved to a valid Date
  */
-class AppsScriptDataSource implements EventDataSource {
-  readonly id = 'apps_script';
-  readonly name = 'Google Apps Script Read-Only Endpoint';
-
-  async fetchEvents(): Promise<CampusEvent[]> {
-    if (!isAppsScriptConfigured) {
-      throw new Error('Google Apps Script endpoint URL is not configured.');
-    }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
-
-    try {
-      const response = await fetch(rawEndpointUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Google Apps Script returned HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const json = await response.json();
-
-      let rawList: any[] = [];
-      if (Array.isArray(json)) {
-        rawList = json;
-      } else if (json && Array.isArray(json.data)) {
-        rawList = json.data;
-      } else if (json && Array.isArray(json.events)) {
-        rawList = json.events;
-      } else {
-        throw new Error('Unexpected payload shape received from Google Apps Script endpoint.');
-      }
-
-      // Strictly validate and filter only Published events
-      const published = rawList
-        .filter((item) => {
-          if (!item || typeof item !== 'object') return false;
-          const status = (item.status || item['Status'] || '').toString().trim().toLowerCase();
-          return status === 'published';
-        })
-        .map((item, index) => normalizeEventRecord(item, index));
-
-      return published;
-    } catch (err: any) {
-      clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        throw new Error('Connection to Google Apps Script timed out (12s).');
-      }
-      throw err;
-    }
-  }
+export function parseDateSafe(val: unknown): Date | null {
+  if (!val) return null;
+  const d = new Date(val as string | number | Date);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 /**
- * Institutional Opportunities Provider
- * Verified real placement and hiring drives from SRM TRP Engineering College.
+ * Validates start_date, registration_deadline, and end_date.
+ * Logs warnings for suspicious sequences (e.g., deadline after start date) without deleting legitimate events.
  */
-class OfficialCatalogDataSource implements EventDataSource {
-  readonly id = 'official_catalog';
-  readonly name = 'SRM TRP Verified Opportunities Catalog';
+export function validateEventDates(
+  startDateRaw: unknown,
+  deadlineRaw?: unknown,
+  endDateRaw?: unknown
+): {
+  startDate: string;
+  registrationDeadline?: string;
+  endDate?: string;
+  warnings: string[];
+} {
+  const warnings: string[] = [];
 
-  async fetchEvents(): Promise<CampusEvent[]> {
-    return SAMPLE_EVENTS.filter((e) => e.status === 'Published');
+  const parsedStart = parseDateSafe(startDateRaw);
+  const startDate = parsedStart ? parsedStart.toISOString() : new Date().toISOString();
+  if (!parsedStart && startDateRaw) {
+    warnings.push(`Start date "${String(startDateRaw)}" is unrecognized; defaulting to current timestamp.`);
   }
+
+  let registrationDeadline: string | undefined = undefined;
+  if (deadlineRaw) {
+    const parsedDeadline = parseDateSafe(deadlineRaw);
+    if (parsedDeadline) {
+      registrationDeadline = parsedDeadline.toISOString();
+      if (parsedStart && parsedDeadline.getTime() > parsedStart.getTime()) {
+        warnings.push(`Registration deadline is scheduled after the event start date.`);
+      }
+    } else {
+      warnings.push(`Registration deadline "${String(deadlineRaw)}" could not be parsed as a valid date.`);
+    }
+  }
+
+  let endDate: string | undefined = undefined;
+  if (endDateRaw) {
+    const parsedEnd = parseDateSafe(endDateRaw);
+    if (parsedEnd) {
+      endDate = parsedEnd.toISOString();
+      if (parsedStart && parsedEnd.getTime() < parsedStart.getTime()) {
+        warnings.push(`End date is set earlier than the event start date.`);
+      }
+    } else {
+      warnings.push(`End date "${String(endDateRaw)}" could not be parsed as a valid date.`);
+    }
+  }
+
+  return {
+    startDate,
+    registrationDeadline,
+    endDate,
+    warnings,
+  };
 }
 
-// Instantiate providers
-const appsScriptProvider = new AppsScriptDataSource();
-const officialCatalogProvider = new OfficialCatalogDataSource();
+/**
+ * Deduplicate event list by normalized event_id.
+ * Prefers the most recently updated record when duplicates occur.
+ */
+export function deduplicateEvents(events: CampusEvent[]): CampusEvent[] {
+  const byId = new Map<string, CampusEvent>();
 
-// In-memory cache for fast responsive UI filtering
-let cachedEvents: CampusEvent[] | null = null;
-let lastFetchSource: 'apps_script' | 'official_catalog' = 'official_catalog';
-let lastFetchError: string | null = null;
+  for (const event of events) {
+    const key = (event.event_id || event.id).trim().toLowerCase();
+    const existing = byId.get(key);
+
+    if (!existing) {
+      byId.set(key, event);
+    } else {
+      console.warn(
+        `[CampusConnect] Duplicate Event ID "${event.event_id}" detected for "${event.name}". Merging with newest row.`
+      );
+      const existingTime = new Date(existing.last_updated || existing.updated_at || 0).getTime();
+      const newTime = new Date(event.last_updated || event.updated_at || 0).getTime();
+
+      if (newTime >= existingTime) {
+        byId.set(key, event);
+      }
+    }
+  }
+
+  return Array.from(byId.values());
+}
+
+/**
+ * Fetches events from the same-origin API proxy (/api/events)
+ * with timeout, response validation, and stale-data detection.
+ * Manages its own timeout without being aborted by an individual unmounting component.
+ */
+async function fetchFromApiProxy(): Promise<{ events: CampusEvent[]; isStale: boolean }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      let errMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorJson = await response.json();
+        if (errorJson && errorJson.message) {
+          errMessage = errorJson.message;
+        }
+      } catch {
+        // use fallback statusText
+      }
+      throw new Error(errMessage);
+    }
+
+    const json = await response.json();
+    let rawList: any[] = [];
+    if (Array.isArray(json)) {
+      rawList = json;
+    } else if (json && Array.isArray(json.data)) {
+      rawList = json.data;
+    } else if (json && Array.isArray(json.events)) {
+      rawList = json.events;
+    } else {
+      throw new Error('Unexpected payload shape received from events endpoint.');
+    }
+
+    const isStale = Boolean(json.is_stale || response.headers.get('X-CampusConnect-Stale') === 'true');
+
+    // Strictly validate and filter only Published events (strip draft/archived/cancelled/empty)
+    const publishedRows = rawList
+      .filter((item) => {
+        if (!item || typeof item !== 'object') return false;
+        const status = (item.status || item['Status'] || '').toString().trim().toLowerCase();
+        return status === 'published';
+      })
+      .map((item, index) => normalizeEventRecord(item, index));
+
+    // Enforce duplicate protection
+    const deduplicated = deduplicateEvents(publishedRows);
+
+    return {
+      events: deduplicated,
+      isStale,
+    };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Request to events endpoint timed out.');
+    }
+    throw err;
+  }
+}
 
 /**
  * Normalizes raw spreadsheet / API objects into guaranteed CampusEvent shapes
@@ -151,20 +218,40 @@ let lastFetchError: string | null = null;
 function normalizeEventRecord(raw: any, index: number): CampusEvent {
   const eventId = (raw.event_id || raw['Event ID'] || `CC-${new Date().getFullYear()}-${String(index + 1).padStart(4, '0')}`).toString().trim();
   const id = raw.id || `live-${eventId.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}`;
+  const name = (raw.name || raw['Event Name'] || 'Untitled Event').toString().trim();
+
+  // Validate start date, deadline, end date
+  const dateValidation = validateEventDates(
+    raw.start_date || raw['Start Date'],
+    raw.registration_deadline || raw['Registration Deadline'],
+    raw.end_date || raw['End Date']
+  );
+
+  if (dateValidation.warnings.length > 0) {
+    console.warn(`[CampusConnect] Date notice for "${name}":`, dateValidation.warnings.join(' | '));
+  }
+
+  // Validate URLs (prevent dead # links, accept valid HTTP/HTTPS)
+  const rawRegUrl = (raw.registration_url || raw['Registration URL'] || '').toString().trim();
+  const rawOffUrl = (raw.official_url || raw['Official Event URL'] || '').toString().trim();
+  const hasValidRegUrl = isValidHttpUrl(rawRegUrl);
+  const registration_url = hasValidRegUrl ? rawRegUrl : '';
+  const official_url = isValidHttpUrl(rawOffUrl) ? rawOffUrl : undefined;
 
   return {
     id,
     event_id: eventId,
-    name: (raw.name || raw['Event Name'] || 'Untitled Event').toString().trim(),
+    name,
     organizer_name: (raw.organizer_name || raw['Organizer Name'] || 'College Organizer').toString().trim(),
     organizer_type: raw.organizer_type || raw['Organizer Type'] || 'Our College',
     category: raw.category || raw['Category'] || 'Technical Events',
     level: raw.level || raw['Level'] || 'National',
     event_type: raw.event_type || raw['Event Type'] || 'Event',
     description: (raw.description || raw['Description'] || '').toString().trim(),
-    start_date: raw.start_date || raw['Start Date'] || new Date().toISOString(),
-    end_date: raw.end_date || raw['End Date'] || undefined,
-    registration_deadline: raw.registration_deadline || raw['Registration Deadline'] || undefined,
+    start_date: dateValidation.startDate,
+    end_date: dateValidation.endDate,
+    registration_deadline: dateValidation.registrationDeadline,
+    date_warnings: dateValidation.warnings.length > 0 ? dateValidation.warnings : undefined,
     mode: raw.mode || raw['Mode'] || 'Offline',
     location: (raw.location || raw['Location'] || 'Campus Venue').toString().trim(),
     registration_fee: typeof raw.registration_fee === 'number' ? raw.registration_fee : parseFloat(raw.registration_fee || '0') || 0,
@@ -186,8 +273,9 @@ function normalizeEventRecord(raw: any, index: number): CampusEvent {
     min_team_size: raw.min_team_size ? Number(raw.min_team_size) : undefined,
     max_team_size: raw.max_team_size ? Number(raw.max_team_size) : undefined,
     prize_pool: raw.prize_pool || raw['Prize Information'] || undefined,
-    official_url: raw.official_url || raw['Official Event URL'] || undefined,
-    registration_url: (raw.registration_url || raw['Registration URL'] || '#').toString().trim(),
+    official_url,
+    registration_url,
+    has_valid_registration_url: hasValidRegUrl,
     banner_url: raw.banner_url || raw['Banner URL'] || undefined,
     drive_file_ref: raw.drive_file_ref || raw['Google Drive File Reference'] || undefined,
     contact_email: raw.contact_email || raw['Contact Email'] || undefined,
@@ -202,14 +290,17 @@ function normalizeEventRecord(raw: any, index: number): CampusEvent {
 
 /**
  * Filter and sort a list of CampusEvent records.
- * Strictly enforces status === 'Published' and combines all filter criteria.
+ * Strictly enforces status === 'Published', deduplicates, and combines all filter criteria.
  */
 export function applyFiltersAndSort(
   rawEvents: CampusEvent[],
   filters?: Partial<EventFilterState>
 ): CampusEvent[] {
-  // Strictly filter for Published status only
-  let items = rawEvents.filter((ev) => ev.status === 'Published');
+  // Strictly filter for Published status only and deduplicate
+  const publishedOnly = rawEvents.filter(
+    (ev) => (ev.status || '').trim().toLowerCase() === 'Published'.toLowerCase()
+  );
+  let items = deduplicateEvents(publishedOnly);
 
   // 1. Text Search across name, organizer, description, category, location, eligible departments, event type
   if (filters?.searchQuery && filters.searchQuery.trim() !== '') {
@@ -284,7 +375,17 @@ export function applyFiltersAndSort(
           'ai and ds',
           'artificial intelligence and data science',
         ],
-        'b tech information technology': ['information technology'],
+        'b tech information technology': ['information technology', 'it'],
+        'computer science and business systems': [
+          'csbs',
+          'business systems',
+          'computer science and business systems',
+        ],
+        'computer science and business systems csbs': [
+          'csbs',
+          'business systems',
+          'computer science and business systems',
+        ],
       };
 
       const terms = aliases[targetDept] || [targetDept];
@@ -396,33 +497,60 @@ export function applyFiltersAndSort(
 
 /**
  * Fetch public published events for Student Discovery.
- * Prioritizes the Google Apps Script endpoint when configured;
- * seamlessly falls back to verified institutional data if not configured or if network fails.
+ * Routes through the same-origin proxy (/api/events) with in-flight deduplication,
+ * navigation memory caching, and reliable error reporting.
  */
 export async function getPublicPublishedEvents(
   filters?: Partial<EventFilterState>,
   page: number = 1,
   pageSize: number = 12,
-  forceRefresh: boolean = false
+  forceRefresh: boolean = false,
+  signal?: AbortSignal
 ): Promise<EventFetchResult> {
-  // If cache is empty or refresh requested, fetch from data source
-  if (!cachedEvents || forceRefresh) {
-    if (isAppsScriptConfigured) {
-      try {
-        const liveEvents = await appsScriptProvider.fetchEvents();
-        cachedEvents = liveEvents;
-        lastFetchSource = 'apps_script';
-        lastFetchError = null;
-      } catch (err: any) {
-        console.warn('[CampusConnect] Google Apps Script endpoint error:', err.message);
-        lastFetchError = err.message || 'Failed connecting to Google Apps Script endpoint';
-        cachedEvents = await officialCatalogProvider.fetchEvents();
-        lastFetchSource = 'official_catalog';
-      }
+  const now = Date.now();
+  const isCacheExpired = !cachedEvents || (now - lastFetchTimestamp > CLIENT_CACHE_TTL_MS);
+
+  // If cache is expired, empty, or a forced fresh request is triggered:
+  if (isCacheExpired || forceRefresh) {
+    if (!inFlightFetchPromise) {
+      inFlightFetchPromise = fetchFromApiProxy()
+        .then((result) => {
+          cachedEvents = result.events;
+          lastFetchTimestamp = Date.now();
+          lastFetchSource = 'api_proxy';
+          lastFetchError = null;
+          isLastFetchStale = result.isStale;
+          inFlightFetchPromise = null;
+          return result;
+        })
+        .catch((err: unknown) => {
+          inFlightFetchPromise = null;
+          console.error('[CampusConnect] Proxy events fetch failed:', err);
+          lastFetchError = err instanceof Error ? err.message : 'Unable to connect to events data source.';
+
+          // Retain previously cached events for resilient offline/stale display if available
+          if (!cachedEvents) {
+            cachedEvents = [];
+          }
+          lastFetchSource = 'api_proxy';
+          return { events: cachedEvents, isStale: false };
+        });
+    }
+
+    if (signal) {
+      // Allow caller to stop waiting without aborting the shared in-flight fetch for others
+      await Promise.race([
+        inFlightFetchPromise,
+        new Promise((_, reject) => {
+          if (signal.aborted) {
+            reject(new Error('Operation aborted'));
+          } else {
+            signal.addEventListener('abort', () => reject(new Error('Operation aborted')), { once: true });
+          }
+        }),
+      ]);
     } else {
-      cachedEvents = await officialCatalogProvider.fetchEvents();
-      lastFetchSource = 'official_catalog';
-      lastFetchError = null;
+      await inFlightFetchPromise;
     }
   }
 
@@ -437,6 +565,7 @@ export async function getPublicPublishedEvents(
     totalCount,
     dataSource: lastFetchSource,
     isDemo: false,
+    isStale: isLastFetchStale,
     error: lastFetchError,
   };
 }

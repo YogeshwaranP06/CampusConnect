@@ -1,11 +1,11 @@
 import React from 'react';
 import { CampusEvent } from '../../types/event';
 import { EventPoster } from '../common/EventPoster';
-import { 
-  Bookmark, 
-  MapPin, 
-  Calendar, 
-  Clock, 
+import {
+  Bookmark,
+  MapPin,
+  Calendar,
+  Clock,
   ArrowUpRight,
   Sparkles
 } from 'lucide-react';
@@ -32,10 +32,15 @@ export const EventCard: React.FC<EventCardProps> = ({
       })
     : event.start_date;
 
-  // Deadline calculation
+  // Deadline & Registration Status calculation
   const now = new Date();
-  let deadlineStatus: 'open' | 'closing_soon' | 'closed' = 'open';
+  let deadlineStatus: 'closed' | 'closing_soon' | 'register_by' | 'open_registration' | 'details_only' = 'open_registration';
   let formattedDeadline = '';
+
+  const hasValidLink = Boolean(
+    event.has_valid_registration_url ??
+    (event.registration_url && event.registration_url !== '#' && event.registration_url.startsWith('http'))
+  );
 
   if (event.registration_deadline) {
     const deadlineDate = new Date(event.registration_deadline);
@@ -43,17 +48,24 @@ export const EventCard: React.FC<EventCardProps> = ({
       const diffHours = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
       if (diffHours < 0) {
         deadlineStatus = 'closed';
-        formattedDeadline = 'Registration closed';
+        formattedDeadline = 'Registration Closed';
       } else if (diffHours <= 72) {
         deadlineStatus = 'closing_soon';
         formattedDeadline = `Closes in ${Math.ceil(diffHours / 24)}d`;
       } else {
+        deadlineStatus = 'register_by';
         formattedDeadline = `Register by ${deadlineDate.toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',
         })}`;
       }
     }
+  } else if (!hasValidLink) {
+    deadlineStatus = 'details_only';
+    formattedDeadline = 'Details Only';
+  } else {
+    deadlineStatus = 'open_registration';
+    formattedDeadline = 'Open Registration';
   }
 
   const fee = typeof event.registration_fee === 'number' ? event.registration_fee : (event.fee_amount || 0);
@@ -150,7 +162,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             <span>{formattedDate}</span>
           </div>
 
-          {/* Registration Deadline Status */}
+          {/* Registration Deadline Status Badge */}
           <div className="text-right text-xs truncate">
             {deadlineStatus === 'closed' ? (
               <span className="text-rose-600 font-medium">Closed</span>
@@ -159,14 +171,19 @@ export const EventCard: React.FC<EventCardProps> = ({
                 <Clock className="w-3.5 h-3.5 shrink-0" />
                 <span>{formattedDeadline}</span>
               </span>
-            ) : formattedDeadline ? (
+            ) : deadlineStatus === 'register_by' ? (
               <span className="text-slate-500 flex items-center justify-end gap-1">
                 <Clock className="w-3 h-3 text-slate-400 shrink-0" />
                 <span>{formattedDeadline}</span>
               </span>
+            ) : deadlineStatus === 'details_only' ? (
+              <span className="text-slate-500 font-medium group-hover:text-indigo-600 transition-colors flex items-center justify-end gap-0.5">
+                <span>Details Only</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </span>
             ) : (
-              <span className="text-indigo-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center justify-end gap-0.5">
-                <span>Details</span>
+              <span className="text-emerald-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center justify-end gap-0.5">
+                <span>Open Registration</span>
                 <ArrowUpRight className="w-3 h-3" />
               </span>
             )}

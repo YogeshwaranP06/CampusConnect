@@ -190,7 +190,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               </div>
               <h4 className="text-sm font-bold text-[#111827]">Apply Directly</h4>
               <p className="text-xs text-[#475569] mt-2 leading-relaxed">
-                Access official corporate links, college feedback spreadsheets, or registration forms with zero intermediaries.
+                Access official corporate links, college registration portals, or forms with zero intermediaries.
               </p>
             </div>
           </div>

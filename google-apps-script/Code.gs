@@ -29,6 +29,7 @@
 
 const CONFIG = {
   SHEET_NAME: "Events",
+  INTERNSHIP_SHEET_NAME: "Internship",
   HEADER_ROW: 1,
   DATA_START_ROW: 2,
 };
@@ -36,9 +37,43 @@ const CONFIG = {
 /**
  * HTTP GET Web Endpoint
  * Handles GET requests from the CampusConnect frontend and returns JSON.
+ * Query Parameters:
+ *   - ?type=events (default) -> returns Published events from Events tab
+ *   - ?type=internships      -> returns Published internships from Internship tab
+ *   - ?type=all              -> returns both datasets separately
  */
 function doGet(e) {
   try {
+    const typeParam = (e && e.parameter && e.parameter.type ? e.parameter.type : "events").toString().trim().toLowerCase();
+
+    if (typeParam === "internships" || typeParam === "internship") {
+      const internships = getPublishedInternships();
+      const responsePayload = {
+        status: "success",
+        count: internships.length,
+        data: internships,
+        generated_at: new Date().toISOString(),
+      };
+      return ContentService.createTextOutput(JSON.stringify(responsePayload))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (typeParam === "all") {
+      const events = getPublishedEvents();
+      const internships = getPublishedInternships();
+      const responsePayload = {
+        status: "success",
+        count_events: events.length,
+        count_internships: internships.length,
+        events: events,
+        internships: internships,
+        generated_at: new Date().toISOString(),
+      };
+      return ContentService.createTextOutput(JSON.stringify(responsePayload))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Default: ?type=events
     const events = getPublishedEvents();
     const responsePayload = {
       status: "success",
@@ -245,6 +280,220 @@ function getPublishedEvents() {
   }
 
   return Array.from(eventsById.values());
+}
+
+/**
+ * Internship Reader: Reads, validates, sanitizes, and deduplicates Published internships.
+ * Reads from the dedicated 'Internship' tab (39 columns).
+ */
+function getPublishedInternships() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(CONFIG.INTERNSHIP_SHEET_NAME);
+
+  if (!sheet) {
+    Logger.log("Notice: Sheet tab '" + CONFIG.INTERNSHIP_SHEET_NAME + "' not found. Returning empty list.");
+    return [];
+  }
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+
+  if (lastRow < CONFIG.DATA_START_ROW) {
+    return [];
+  }
+
+  const headerValues = sheet.getRange(CONFIG.HEADER_ROW, 1, 1, lastCol).getValues()[0];
+  const dataRange = sheet.getRange(CONFIG.DATA_START_ROW, 1, lastRow - (CONFIG.DATA_START_ROW - 1), lastCol);
+  const rows = dataRange.getValues();
+
+  // Create header lookup map (case-insensitive and trimmed)
+  const headerMap = {};
+  headerValues.forEach((header, index) => {
+    if (header) {
+      headerMap[header.toString().trim().toLowerCase()] = index;
+    }
+  });
+
+  const getColValue = (row, ...candidateNames) => {
+    for (let name of candidateNames) {
+      const idx = headerMap[name.toLowerCase()];
+      if (idx !== undefined && idx >= 0) {
+        return row[idx];
+      }
+    }
+    return "";
+  };
+
+  const internshipsById = new Map();
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNumber = i + CONFIG.DATA_START_ROW;
+
+    // Check if entire row is empty
+    const isBlank = row.every(val => val === "" || val === null || val === undefined);
+    if (isBlank) continue;
+
+    // 1. Strict status check: MUST be 'Published'
+    const statusRaw = (getColValue(row, "status", "Status") || "").toString().trim();
+    if (statusRaw.toLowerCase() !== "published") {
+      continue;
+    }
+
+    // 2. Validate required fields
+    const name = (getColValue(row, "name", "Name", "Role Title", "Title") || "").toString().trim();
+    if (!name || name.length < 2) {
+      continue;
+    }
+
+    // 3. Date parsing and formatting
+    const parseDateSafe = (val) => {
+      if (!val) return null;
+      if (val instanceof Date && !isNaN(val.getTime())) {
+        return val;
+      }
+      const parsed = new Date(val);
+      return !isNaN(parsed.getTime()) ? parsed : null;
+    };
+
+    const parsedStart = parseDateSafe(getColValue(row, "start_date", "Start Date"));
+    const startDate = parsedStart ? parsedStart.toISOString() : undefined;
+    const parsedEnd = parseDateSafe(getColValue(row, "end_date", "End Date"));
+    const endDate = parsedEnd ? parsedEnd.toISOString() : undefined;
+    const parsedDeadline = parseDateSafe(getColValue(row, "application_deadline", "Application Deadline", "deadline", "Deadline"));
+    const appDeadline = parsedDeadline ? parsedDeadline.toISOString() : undefined;
+
+    // 4. URL validation
+    const isValidHttpUrl = (url) => {
+      if (!url || typeof url !== "string") return false;
+      const trimmed = url.trim();
+      return (trimmed.indexOf("http://") === 0 || trimmed.indexOf("https://") === 0) && trimmed !== "#";
+    };
+
+    const rawAppUrl = (getColValue(row, "application_url", "Application URL", "Register Link") || "").toString().trim();
+    const rawOfficialUrl = (getColValue(row, "official_url", "Official URL", "Website") || "").toString().trim();
+
+    const hasValidAppUrl = isValidHttpUrl(rawAppUrl);
+    const applicationUrl = hasValidAppUrl ? rawAppUrl : "";
+    const officialUrl = isValidHttpUrl(rawOfficialUrl) ? rawOfficialUrl : undefined;
+
+    // 5. Unique identifier (internship_id)
+    let internshipId = (getColValue(row, "internship_id", "Internship ID", "ID") || "").toString().trim();
+    if (!internshipId) {
+      internshipId = "INT-" + new Date().getFullYear() + "-" + ("000" + rowNumber).slice(-4);
+    }
+
+    // 6. Fees
+    const feeRaw = getColValue(row, "registration_fee", "Registration Fee");
+    let registrationFee = 0;
+    if (feeRaw !== "" && feeRaw !== null && feeRaw !== undefined) {
+      const parsedFee = parseFloat(feeRaw.toString().replace(/[^0-9.]/g, ""));
+      if (!isNaN(parsedFee)) registrationFee = parsedFee;
+    }
+    const feeAmountRaw = getColValue(row, "fee_amount", "Fee Amount");
+    let feeAmount = 0;
+    if (feeAmountRaw !== "" && feeAmountRaw !== null && feeAmountRaw !== undefined) {
+      const parsed = parseFloat(feeAmountRaw.toString().replace(/[^0-9.]/g, ""));
+      if (!isNaN(parsed)) feeAmount = parsed;
+    }
+
+    // 7. Featured boolean
+    const featuredRaw = getColValue(row, "featured", "Featured");
+    const isFeatured = featuredRaw === true || 
+                       String(featuredRaw).trim().toLowerCase() === "true" || 
+                       String(featuredRaw).trim().toLowerCase() === "yes" || 
+                       String(featuredRaw).trim() === "1";
+
+    // 8. Stipend handling
+    const rawStipend = getColValue(row, "stipend_amount", "Stipend Amount");
+    let stipendAmount = "";
+    if (typeof rawStipend === "number") {
+      stipendAmount = rawStipend;
+    } else if (rawStipend) {
+      stipendAmount = rawStipend.toString().trim();
+    }
+
+    const minSizeRaw = parseInt(getColValue(row, "min_team_size", "Minimum Team Size"), 10);
+    const maxSizeRaw = parseInt(getColValue(row, "max_team_size", "Maximum Team Size"), 10);
+    const maxParticipantsRaw = parseInt(getColValue(row, "max_participants", "Maximum Participants"), 10);
+
+    const lastUpdatedDate = parseDateSafe(getColValue(row, "last_updated", "Last Updated"));
+    const lastUpdated = lastUpdatedDate ? lastUpdatedDate.toISOString() : new Date().toISOString();
+
+    const internship = {
+      id: "apps-script-int-" + internshipId.toLowerCase().replace(/[^a-z0-9_-]/g, "-"),
+      internship_id: internshipId,
+      event_slug: (getColValue(row, "event_slug", "Event Slug") || "").toString().trim() || undefined,
+      name: name,
+      organizer_name: (getColValue(row, "organizer_name", "Organizer Name", "Company") || "Partner Organization").toString().trim(),
+      organizer_type: (getColValue(row, "organizer_type", "Organizer Type") || "Company").toString().trim(),
+      category: (getColValue(row, "category", "Category") || "Internships").toString().trim(),
+      level: (getColValue(row, "level", "Level") || "National").toString().trim(),
+      internship_type: (getColValue(row, "internship_type", "Internship Type") || "Internship").toString().trim(),
+      description: (getColValue(row, "description", "Description") || "").toString().trim(),
+      start_date: startDate,
+      end_date: endDate,
+      application_deadline: appDeadline,
+      mode: (getColValue(row, "mode", "Mode") || "Offline").toString().trim(),
+      location: (getColValue(row, "location", "Location") || "Campus / Office").toString().trim(),
+      registration_fee: registrationFee,
+      fee_amount: feeAmount,
+      fee_type: (getColValue(row, "fee_type", "Fee Type") || (registrationFee > 0 ? "Paid" : "Free")).toString().trim(),
+      department: (getColValue(row, "department", "Department") || "").toString().trim() || undefined,
+      tags: (getColValue(row, "tags", "Tags") || "").toString().trim() || "",
+      eligibility: (getColValue(row, "eligibility", "Eligibility") || "Pre-final and final year engineering students").toString().trim(),
+      eligible_departments: (getColValue(row, "eligible_departments", "Eligible Departments") || "All Departments").toString().trim(),
+      participation_type: (getColValue(row, "participation_type", "Participation Type") || "Individual").toString().trim(),
+      min_team_size: !isNaN(minSizeRaw) ? minSizeRaw : undefined,
+      max_team_size: !isNaN(maxSizeRaw) ? maxSizeRaw : undefined,
+      max_participants: !isNaN(maxParticipantsRaw) ? maxParticipantsRaw : undefined,
+      stipend_amount: stipendAmount,
+      stipend_details: (getColValue(row, "stipend_details", "Stipend Details") || "").toString().trim() || undefined,
+      official_url: officialUrl,
+      application_url: applicationUrl,
+      has_valid_application_url: hasValidAppUrl,
+      banner_url: (getColValue(row, "banner_url", "Banner URL") || "").toString().trim() || undefined,
+      drive_file_ref: (getColValue(row, "drive_file_ref", "Google Drive File Reference") || "").toString().trim() || undefined,
+      contact_email: (getColValue(row, "contact_email", "Contact Email") || "").toString().trim() || undefined,
+      contact_phone: (getColValue(row, "contact_phone", "Contact Phone") || "").toString().trim() || undefined,
+      status: "Published",
+      featured: isFeatured,
+      last_updated: lastUpdated,
+      source_row_id: rowNumber,
+      created_at: (parseDateSafe(getColValue(row, "created_at", "Created At")) || new Date()).toISOString(),
+      updated_at: (parseDateSafe(getColValue(row, "updated_at", "Updated At")) || new Date()).toISOString(),
+    };
+
+    // Deduplicate by internship_id (keep newest)
+    const dedupKey = internshipId.toLowerCase();
+    if (internshipsById.has(dedupKey)) {
+      const existing = internshipsById.get(dedupKey);
+      const existingTime = new Date(existing.last_updated || 0).getTime();
+      const newTime = new Date(internship.last_updated || 0).getTime();
+      if (newTime >= existingTime) {
+        internshipsById.set(dedupKey, internship);
+      }
+    } else {
+      internshipsById.set(dedupKey, internship);
+    }
+  }
+
+  return Array.from(internshipsById.values());
+}
+
+/**
+ * Diagnostic & Testing Function for Internships
+ */
+function testDoGetInternships() {
+  const result = getPublishedInternships();
+  Logger.log("=== CampusConnect Apps Script Internships Test ===");
+  Logger.log("Total published internships found: " + result.length);
+  if (result.length > 0) {
+    Logger.log("Sample First Internship:");
+    Logger.log(JSON.stringify(result[0], null, 2));
+  } else {
+    Logger.log("No published internships found. Check that row(s) in 'Internship' tab have Status = 'Published'.");
+  }
 }
 
 /**

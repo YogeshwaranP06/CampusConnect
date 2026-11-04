@@ -1,16 +1,11 @@
-import React, { useState } from 'react';
-import { Sheet, FileSpreadsheet, HelpCircle, CheckCircle2 } from 'lucide-react';
-import { getDataSourceStatus } from '../../services/eventService';
-import { DataSourceSetupModal } from './DataSourceSetupModal';
+import React from 'react';
+import { CheckCircle2, ShieldCheck } from 'lucide-react';
 
 interface FooterProps {
   onNavigate: (view: 'home' | 'events' | 'internships' | 'core' | 'saved', category?: string) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
-  const [setupModalOpen, setSetupModalOpen] = useState(false);
-  const status = getDataSourceStatus();
-
   return (
     <>
       <footer className="bg-[#0f172a] text-slate-400 border-t border-slate-800">
@@ -41,12 +36,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </p>
               <div className="flex flex-col gap-2 pt-2">
                 <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <Sheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>Google Sheets Master Source</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>Verified Collegiate Catalog</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                  <span>Google Apps Script Read-Only API</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                  <span>Direct Official Registration</span>
                 </div>
               </div>
             </div>
@@ -149,25 +144,19 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </ul>
             </div>
 
-            {/* Architecture & Google Sheets Info */}
+            {/* Coordination & Privacy */}
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
                 Event Coordination System
               </h4>
               <p className="text-xs text-slate-400 leading-relaxed font-normal">
-                Authorized student event coordinators manage master records directly in Google Sheets. Published entries stream to students via read-only Apps Script without exposing credentials.
+                Authorized student coordinators curate master records verified by department faculty. Published opportunities stream directly to students in real time.
               </p>
               <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSetupModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-slate-800 hover:bg-indigo-600 rounded-full border border-slate-700 hover:border-indigo-600 transition-all cursor-pointer shadow-xs"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>
-                    {status.isConfigured ? 'Google Sheets: Live' : 'Integration Guide & Status'}
-                  </span>
-                </button>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium text-emerald-300 bg-emerald-950/60 rounded-full border border-emerald-800/80 shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Verified Live Portal</span>
+                </div>
               </div>
               <div className="text-[11px] text-slate-500 pt-1">
                 Student privacy guaranteed: No login or student credentials required.
@@ -182,7 +171,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </p>
             <div className="flex items-center gap-4">
               <span className="font-mono text-[11px]">
-                {status.isConfigured ? 'Live Google Sheets Feed' : 'Verified Placement Database'}
+                Verified Campus Opportunities
               </span>
               <span>·</span>
               <span>Open Student Access</span>
@@ -190,11 +179,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
         </div>
       </footer>
-
-      <DataSourceSetupModal
-        isOpen={setupModalOpen}
-        onClose={() => setSetupModalOpen(false)}
-      />
     </>
   );
 };

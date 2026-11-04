@@ -14,12 +14,10 @@ import {
   MapPin,
   Clock,
   Sparkles,
-  FileSpreadsheet,
   AlertTriangle,
   RefreshCw,
   Info
 } from 'lucide-react';
-import { DataSourceSetupModal } from '../common/DataSourceSetupModal';
 
 interface ExploreEventsProps {
   initialCategory?: string;
@@ -76,7 +74,6 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
   const [isDemo, setIsDemo] = useState(true);
   const [isStale, setIsStale] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [setupModalOpen, setSetupModalOpen] = useState(false);
 
   const isRefreshingRef = useRef(false);
   const lastVisibilityRefreshTime = useRef(Date.now());
@@ -224,8 +221,8 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
-              <strong>Google Sheets connection issue:</strong> {fetchError}.
-              Live event data may be unavailable. Sample events are not being shown.
+              <strong>Notice:</strong> {fetchError}.
+              Live event data may be temporarily unavailable.
             </span>
           </div>
           <button
@@ -433,12 +430,6 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
           </div>
         </div>
       )}
-
-      {/* Setup Guide Modal */}
-      <DataSourceSetupModal
-        isOpen={setupModalOpen}
-        onClose={() => setSetupModalOpen(false)}
-      />
     </div>
   );
 };

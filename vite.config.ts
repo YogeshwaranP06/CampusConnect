@@ -8,11 +8,13 @@ function apiEventsDevPlugin(env: Record<string, string>): Plugin {
     name: 'api-events-dev-plugin',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (req.url && req.url.split('?')[0] === '/api/events') {
+        const pathname = req.url ? req.url.split('?')[0] : '';
+        if (pathname === '/api/events' || pathname === '/api/internships') {
           try {
             // Ensure server environment variable is available to handler
             process.env.APPS_SCRIPT_URL = env.APPS_SCRIPT_URL || env.VITE_APPS_SCRIPT_URL || '';
-            const handlerModule = await server.ssrLoadModule('/api/events.ts');
+            const modulePath = pathname === '/api/events' ? '/api/events.ts' : '/api/internships.ts';
+            const handlerModule = await server.ssrLoadModule(modulePath);
             const handler = handlerModule.default;
 
             const resHelper = Object.assign(res, {

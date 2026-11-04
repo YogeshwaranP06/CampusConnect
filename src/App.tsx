@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { CampusEvent } from './types/event';
+import { CampusInternship } from './types/internship';
 import { getPublicPublishedEvents, getSavedEventIds, toggleSavedEventId } from './services/eventService';
+import { 
+  getPublicPublishedInternships, 
+  getSavedInternshipIds, 
+  toggleSavedInternshipId 
+} from './services/internshipService';
 import { Navbar, NavViewType } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
 import { StudentHome } from './components/student/StudentHome';
@@ -8,6 +14,7 @@ import { ExploreEvents } from './components/student/ExploreEvents';
 import { OpportunitiesView } from './components/student/OpportunitiesView';
 import { SavedEventsView } from './components/student/SavedEventsView';
 import { EventDetailsModal } from './components/student/EventDetailsModal';
+import { InternshipDetailsModal } from './components/student/InternshipDetailsModal';
 
 export type AppView = NavViewType;
 
@@ -19,13 +26,18 @@ export default function App() {
   const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
   
-  // Public Data State
+  // Public Events State
   const [publicEvents, setPublicEvents] = useState<CampusEvent[]>([]);
   const [selectedModalEvent, setSelectedModalEvent] = useState<CampusEvent | null>(null);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
 
-  // Load Published Events for Student Discovery
+  // Independent Public Internships State
+  const [publicInternships, setPublicInternships] = useState<CampusInternship[]>([]);
+  const [savedInternshipIds, setSavedInternshipIds] = useState<string[]>([]);
+  const [selectedModalInternship, setSelectedModalInternship] = useState<CampusInternship | null>(null);
+
+  // Load Published Events & Internships for Student Discovery
   const reloadData = () => {
     setIsDataLoading(true);
     getPublicPublishedEvents()
@@ -38,7 +50,17 @@ export default function App() {
         setIsDataLoading(false);
       });
 
+    getPublicPublishedInternships(undefined, 1, 100, true)
+      .then((res) => {
+        setPublicInternships(res.internships);
+      })
+      .catch((err) => {
+        console.error('Failed loading public internships:', err);
+        setPublicInternships([]);
+      });
+
     setSavedIds(getSavedEventIds());
+    setSavedInternshipIds(getSavedInternshipIds());
   };
 
   useEffect(() => {
@@ -115,6 +137,12 @@ export default function App() {
     setSavedIds(getSavedEventIds());
   };
 
+  const handleToggleSaveInternship = (internshipId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    toggleSavedInternshipId(internshipId);
+    setSavedInternshipIds(getSavedInternshipIds());
+  };
+
   // Related events for modal
   const relatedEvents = selectedModalEvent
     ? publicEvents.filter(
@@ -128,7 +156,7 @@ export default function App() {
       <Navbar
         activeView={activeView}
         onNavigate={handleNavigate}
-        savedCount={savedIds.length}
+        savedCount={savedIds.length + savedInternshipIds.length}
       />
 
       {/* Main Content Area */}
@@ -159,10 +187,10 @@ export default function App() {
 
         {activeView === 'internships' && (
           <OpportunitiesView
-            events={publicEvents}
-            onSelectEvent={setSelectedModalEvent}
-            savedIds={savedIds}
-            onToggleSave={handleToggleSave}
+            internships={publicInternships}
+            savedIds={savedInternshipIds}
+            onToggleSave={handleToggleSaveInternship}
+            onSelectInternship={setSelectedModalInternship}
           />
         )}
 
@@ -198,6 +226,14 @@ export default function App() {
         onToggleSave={(id) => handleToggleSave(id)}
         relatedEvents={relatedEvents}
         onSelectRelated={(ev) => setSelectedModalEvent(ev)}
+      />
+
+      {/* Global Internship Details Modal */}
+      <InternshipDetailsModal
+        internship={selectedModalInternship}
+        onClose={() => setSelectedModalInternship(null)}
+        isSaved={selectedModalInternship ? savedInternshipIds.includes(selectedModalInternship.internship_id || selectedModalInternship.id) : false}
+        onToggleSave={(id) => handleToggleSaveInternship(id)}
       />
 
       {/* Public Footer */}

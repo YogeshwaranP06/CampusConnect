@@ -1,104 +1,126 @@
 import React, { useState } from 'react';
-import { CampusEvent } from '../../types/event';
-import { EventCard } from './EventCard';
+import { CampusInternship } from '../../types/internship';
+import { InternshipCard } from './InternshipCard';
 import { SRM_TRP_DEPARTMENTS } from '../../utils/validation';
-import { Search, GraduationCap } from 'lucide-react';
+import { Search, GraduationCap, Briefcase } from 'lucide-react';
 
 interface OpportunitiesViewProps {
-  events: CampusEvent[];
-  onSelectEvent: (event: CampusEvent) => void;
+  internships: CampusInternship[];
   savedIds: string[];
-  onToggleSave: (eventId: string, e: React.MouseEvent) => void;
+  onToggleSave: (internshipId: string, e?: React.MouseEvent) => void;
+  onSelectInternship?: (internship: CampusInternship) => void;
 }
 
 export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
-  events = [],
-  onSelectEvent,
+  internships = [],
   savedIds = [],
   onToggleSave,
+  onSelectInternship,
 }) => {
   const [opportunityType, setOpportunityType] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
 
-  // Opportunities include Internships, Training Programs, Career Opportunities, and Fellowship/R&D programs
-  const opportunityEvents = events.filter((e) => {
-    if (!e) return false;
+  const filteredInternships = internships.filter((item) => {
+    if (!item) return false;
 
-    const cat = (e.category || '').toLowerCase();
-    const eventType = (e.event_type || '').toLowerCase();
-    const name = (e.name || '').toLowerCase();
-    const tags = Array.isArray(e.tags) ? e.tags.map((t) => (t || '').toLowerCase()) : [];
-
-    const isOpp =
-      cat === 'internships' ||
-      cat === 'training programs' ||
-      cat === 'career opportunities' ||
-      eventType.includes('fellowship') ||
-      eventType.includes('internship') ||
-      eventType.includes('training') ||
-      name.includes('internship') ||
-      name.includes('recruitment') ||
-      name.includes('hiring') ||
-      tags.some((t) => t.includes('internship') || t.includes('hiring') || t.includes('ppo') || t.includes('fte'));
-
-    if (!isOpp) return false;
-
+    // Filter by Tab / Opportunity Type
     if (opportunityType !== 'all') {
-      if (opportunityType === 'Internships') {
-        const isInternship =
-          cat === 'internships' ||
-          name.includes('internship') ||
-          eventType.includes('internship') ||
-          tags.some((t) => t.includes('internship'));
-        if (!isInternship) return false;
-      } else if (opportunityType === 'Career Opportunities') {
-        const isCareer =
-          cat === 'career opportunities' ||
-          name.includes('recruitment') ||
-          name.includes('hiring') ||
-          tags.some((t) => t.includes('recruitment') || t.includes('hiring'));
-        if (!isCareer) return false;
+      const cat = (item.category || '').toLowerCase();
+      const type = (item.internship_type || '').toLowerCase();
+      const stipendDesc = (item.stipend_details || '').toLowerCase();
+      const stipendVal = typeof item.stipend_amount === 'number' ? item.stipend_amount : 0;
+
+      if (opportunityType === 'paid') {
+        const isPaid =
+          stipendVal > 0 ||
+          stipendDesc.includes('₹') ||
+          stipendDesc.includes('/mo') ||
+          (stipendDesc.length > 0 && !stipendDesc.includes('unpaid'));
+        if (!isPaid) return false;
+      } else if (opportunityType === 'fellowships') {
+        const isFellowship =
+          cat.includes('fellowship') ||
+          type.includes('fellowship') ||
+          type.includes('r&d') ||
+          cat.includes('research');
+        if (!isFellowship) return false;
+      } else if (opportunityType === 'training') {
+        const isTraining =
+          cat.includes('training') ||
+          type.includes('training') ||
+          type.includes('industrial');
+        if (!isTraining) return false;
       }
     }
 
-    // Department filter
+    // Filter by Academic Department
     if (departmentFilter !== 'all') {
       const targetDept = departmentFilter.toLowerCase();
-      const eligDepts = (e.eligible_departments || '').toLowerCase();
-      const dept = (e.department || '').toLowerCase();
-      const elig = (e.eligibility || '').toLowerCase();
-      const desc = (e.description || '').toLowerCase();
-      const fullText = `${eligDepts} ${dept} ${elig} ${desc} ${name} ${tags.join(' ')}`;
+      const eligDepts = (item.eligible_departments || '').toLowerCase();
+      const dept = (item.department || '').toLowerCase();
+      const elig = (item.eligibility || '').toLowerCase();
+      const desc = (item.description || '').toLowerCase();
+      const name = (item.name || '').toLowerCase();
+      const rawTags = Array.isArray(item.tags) ? item.tags.join(' ') : (item.tags || '');
+      const fullText = `${eligDepts} ${dept} ${elig} ${desc} ${name} ${rawTags}`.toLowerCase();
 
-      if (!eligDepts.includes('all') && !elig.includes('all students') && !elig.includes('all engineering')) {
+      const allowsAll =
+        eligDepts.includes('all') ||
+        elig.includes('all students') ||
+        elig.includes('all branches') ||
+        elig.includes('open to all') ||
+        elig.includes('any engineering');
+
+      if (!allowsAll) {
         let match = false;
         if (targetDept.includes('civil') && fullText.includes('civil')) match = true;
-        else if ((targetDept.includes('computer science') || targetDept.includes('cse')) && (fullText.includes('computer') || fullText.includes('cs') || fullText.includes('cse') || fullText.includes('software'))) match = true;
-        else if ((targetDept.includes('electronics and communication') || targetDept.includes('ece')) && (fullText.includes('ece') || fullText.includes('electronics') || fullText.includes('communication'))) match = true;
-        else if ((targetDept.includes('electrical and electronics') || targetDept.includes('eee')) && (fullText.includes('eee') || fullText.includes('electrical'))) match = true;
-        else if (targetDept.includes('mechanical') && fullText.includes('mech')) match = true;
-        else if ((targetDept.includes('artificial intelligence and data science') || targetDept.includes('ai&ds')) && (fullText.includes('ai') || fullText.includes('data science') || fullText.includes('artificial intelligence'))) match = true;
-        else if ((targetDept.includes('artificial intelligence and machine learning') || targetDept.includes('aiml')) && (fullText.includes('ai') || fullText.includes('machine learning') || fullText.includes('aiml'))) match = true;
-        else if ((targetDept.includes('information technology') || targetDept.includes('(it)')) && (fullText.includes('information technology') || fullText.includes(' it ') || fullText.includes('/it') || fullText.includes('software'))) match = true;
+        else if (
+          (targetDept.includes('computer science') || targetDept.includes('cse')) &&
+          (fullText.includes('computer') || fullText.includes('cs') || fullText.includes('cse') || fullText.includes('software'))
+        ) match = true;
+        else if (
+          (targetDept.includes('electronics and communication') || targetDept.includes('ece')) &&
+          (fullText.includes('ece') || fullText.includes('electronics') || fullText.includes('communication'))
+        ) match = true;
+        else if (
+          (targetDept.includes('electrical and electronics') || targetDept.includes('eee')) &&
+          (fullText.includes('eee') || fullText.includes('electrical'))
+        ) match = true;
+        else if (targetDept.includes('mechanical') && (fullText.includes('mech') || fullText.includes('mechanical'))) match = true;
+        else if (
+          (targetDept.includes('artificial intelligence and data science') || targetDept.includes('ai&ds')) &&
+          (fullText.includes('ai') || fullText.includes('data science') || fullText.includes('artificial intelligence'))
+        ) match = true;
+        else if (
+          (targetDept.includes('artificial intelligence and machine learning') || targetDept.includes('aiml')) &&
+          (fullText.includes('ai') || fullText.includes('machine learning') || fullText.includes('aiml'))
+        ) match = true;
+        else if (
+          (targetDept.includes('business systems') || targetDept.includes('csbs')) &&
+          (fullText.includes('csbs') || fullText.includes('business systems'))
+        ) match = true;
         else if (fullText.includes(targetDept)) match = true;
 
         if (!match) return false;
       }
     }
 
+    // Search Query Filtering
     if (search.trim()) {
       const q = search.toLowerCase();
-      const org = (e.organizer_name || '').toLowerCase();
-      const desc = (e.description || '').toLowerCase();
-      const elig = (e.eligibility || '').toLowerCase();
+      const name = (item.name || '').toLowerCase();
+      const org = (item.organizer_name || '').toLowerCase();
+      const desc = (item.description || '').toLowerCase();
+      const elig = (item.eligibility || '').toLowerCase();
+      const roleType = (item.internship_type || '').toLowerCase();
 
       return (
         name.includes(q) ||
         org.includes(q) ||
         desc.includes(q) ||
         elig.includes(q) ||
-        tags.some((t) => t.includes(q))
+        roleType.includes(q)
       );
     }
 
@@ -116,7 +138,7 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
           Internships, Research Fellowships &amp; Industrial Training
         </h1>
         <p className="text-sm text-[#475569] leading-relaxed font-normal">
-          Verified paid internships, corporate recruitment drives, technical training programs, and innovation challenges from partner enterprises.
+          Verified industry internships, funded research fellowships, corporate recruitment drives, and hands-on industrial training curated for SRM TRP students.
         </p>
       </div>
 
@@ -139,25 +161,36 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setOpportunityType('Internships')}
+              onClick={() => setOpportunityType('paid')}
               className={`px-4 py-2 text-xs font-medium rounded-full whitespace-nowrap transition-all cursor-pointer ${
-                opportunityType === 'Internships'
+                opportunityType === 'paid'
                   ? 'bg-white text-indigo-600 font-semibold shadow-xs'
                   : 'text-[#475569] hover:text-[#111827]'
               }`}
             >
-              Paid Internships
+              Paid Stipend
             </button>
             <button
               type="button"
-              onClick={() => setOpportunityType('Career Opportunities')}
+              onClick={() => setOpportunityType('fellowships')}
               className={`px-4 py-2 text-xs font-medium rounded-full whitespace-nowrap transition-all cursor-pointer ${
-                opportunityType === 'Career Opportunities'
+                opportunityType === 'fellowships'
                   ? 'bg-white text-indigo-600 font-semibold shadow-xs'
                   : 'text-[#475569] hover:text-[#111827]'
               }`}
             >
-              Recruitment Drives
+              Research Fellowships
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpportunityType('training')}
+              className={`px-4 py-2 text-xs font-medium rounded-full whitespace-nowrap transition-all cursor-pointer ${
+                opportunityType === 'training'
+                  ? 'bg-white text-indigo-600 font-semibold shadow-xs'
+                  : 'text-[#475569] hover:text-[#111827]'
+              }`}
+            >
+              Industrial Training
             </button>
           </div>
 
@@ -186,29 +219,39 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search opportunities..."
+            placeholder="Search role, skills, or company..."
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-xs text-[#111827] placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600"
           />
         </div>
       </div>
 
       {/* Grid */}
-      {opportunityEvents.length === 0 ? (
-        <div className="p-16 text-center bg-white rounded-3xl border border-slate-200 shadow-xs">
-          <p className="font-serif text-base font-normal text-[#111827]">No opportunities match this filter.</p>
-          <p className="text-xs text-[#475569] mt-1">Try selecting "All Departments" or reset your search term.</p>
+      {filteredInternships.length === 0 ? (
+        <div className="p-16 text-center bg-white rounded-3xl border border-slate-200 shadow-xs space-y-2">
+          <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-indigo-600 mb-3">
+            <Briefcase className="w-6 h-6 text-indigo-600" />
+          </div>
+          <p className="font-serif text-lg font-normal text-[#111827]">
+            No internship opportunities match this filter
+          </p>
+          <p className="text-xs text-[#475569] max-w-sm mx-auto">
+            Try switching to "All Opportunities" or reset your department filter to view all verified campus drives.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {opportunityEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              onSelect={onSelectEvent}
-              isSaved={savedIds.includes(event.id)}
-              onToggleSave={onToggleSave}
-            />
-          ))}
+          {filteredInternships.map((internship) => {
+            const cardId = internship.internship_id || internship.id;
+            return (
+              <InternshipCard
+                key={cardId}
+                internship={internship}
+                onSelect={onSelectInternship}
+                isSaved={savedIds.includes(cardId)}
+                onToggleSave={(id, e) => onToggleSave(id, e)}
+              />
+            );
+          })}
         </div>
       )}
     </div>

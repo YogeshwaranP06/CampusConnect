@@ -376,16 +376,15 @@ export function applyFiltersAndSort(
           'artificial intelligence and data science',
         ],
         'b tech information technology': ['information technology', 'it'],
-        'computer science and business systems': [
-          'csbs',
-          'business systems',
-          'computer science and business systems',
+        'm e vlsi design': ['vlsi', 'vlsi design', 'm e vlsi', 'me vlsi', 'm e vlsi design'],
+        'm e thermal engineering': [
+          'thermal',
+          'thermal engineering',
+          'm e thermal',
+          'me thermal',
+          'm e thermal engineering',
         ],
-        'computer science and business systems csbs': [
-          'csbs',
-          'business systems',
-          'computer science and business systems',
-        ],
+        mba: ['mba', 'master of business administration', 'business administration', 'management'],
       };
 
       const terms = aliases[targetDept] || [targetDept];

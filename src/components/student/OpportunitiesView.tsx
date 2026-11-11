@@ -96,9 +96,11 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
           (targetDept.includes('artificial intelligence and machine learning') || targetDept.includes('aiml')) &&
           (fullText.includes('ai') || fullText.includes('machine learning') || fullText.includes('aiml'))
         ) match = true;
+        else if (targetDept.includes('vlsi') && fullText.includes('vlsi')) match = true;
+        else if (targetDept.includes('thermal') && fullText.includes('thermal')) match = true;
         else if (
-          (targetDept.includes('business systems') || targetDept.includes('csbs')) &&
-          (fullText.includes('csbs') || fullText.includes('business systems'))
+          targetDept.includes('mba') &&
+          (fullText.includes('mba') || fullText.includes('business administration') || fullText.includes('management'))
         ) match = true;
         else if (fullText.includes(targetDept)) match = true;
 

@@ -370,6 +370,15 @@ export function applyInternshipFilters(
         'b e cse artificial intelligence and machine learning': ['aiml', 'artificial intelligence and machine learning'],
         'b tech artificial intelligence and data science': ['ai and ds', 'artificial intelligence and data science'],
         'b tech information technology': ['information technology', 'it'],
+        'm e vlsi design': ['vlsi', 'vlsi design', 'm e vlsi', 'me vlsi', 'm e vlsi design'],
+        'm e thermal engineering': [
+          'thermal',
+          'thermal engineering',
+          'm e thermal',
+          'me thermal',
+          'm e thermal engineering',
+        ],
+        mba: ['mba', 'master of business administration', 'business administration', 'management'],
       };
 
       const terms = aliases[targetDept] || [targetDept];

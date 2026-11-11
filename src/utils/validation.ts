@@ -44,7 +44,9 @@ export const SRM_TRP_DEPARTMENTS = [
   'B.E CSE (Artificial Intelligence and Machine Learning)',
   'B.Tech-Artificial Intelligence and Data Science',
   'B.Tech (Information Technology)',
-  'Computer Science and Business Systems (CSBS)',
+  'M.E.-VLSI Design',
+  'M.E.-Thermal Engineering',
+  'MBA',
 ] as const;
 
 export type DepartmentName = typeof SRM_TRP_DEPARTMENTS[number];

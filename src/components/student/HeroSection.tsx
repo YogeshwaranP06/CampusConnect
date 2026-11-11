@@ -60,10 +60,24 @@ const DEPARTMENT_CARDS = [
     image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=600&q=80',
   },
   {
-    code: 'CSBS',
-    title: 'CSBS',
-    fullName: 'Computer Science and Business Systems',
-    filterTarget: 'Computer Science and Business Systems',
+    code: 'M.E. (VLSI)',
+    title: 'M.E. (VLSI)',
+    fullName: 'M.E. - VLSI Design',
+    filterTarget: 'M.E.-VLSI Design',
+    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    code: 'M.E. (Thermal)',
+    title: 'M.E. (Thermal)',
+    fullName: 'M.E. - Thermal Engineering',
+    filterTarget: 'M.E.-Thermal Engineering',
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+  },
+  {
+    code: 'MBA',
+    title: 'MBA',
+    fullName: 'Master of Business Administration',
+    filterTarget: 'MBA',
     image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80',
   },
 ];
@@ -155,7 +169,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
       </div>
 
-      {/* 8 Academic Department Cards Grid - Moved down cleanly below the college background image */}
+      {/* Academic Department Cards Grid - Moved down cleanly below the college background image */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div>

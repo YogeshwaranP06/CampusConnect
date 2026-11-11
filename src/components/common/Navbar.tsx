@@ -27,29 +27,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-6 h-18">
-            {/* Wordmark with SRM TRP Engineering College Branding & Logo */}
-            <div className="flex items-center gap-3.5 shrink-0">
+            {/* SRM TRP Engineering College Logo */}
+            <div className="flex items-center shrink-0">
               <button
                 onClick={() => handleNavClick('home')}
-                className="flex items-center gap-3 text-left group cursor-pointer focus-visible:outline-none"
+                className="flex items-center text-left group cursor-pointer focus-visible:outline-none"
+                aria-label="SRM TRP Engineering College Home"
               >
                 <img
                   src="/srm-trp-logo.png"
                   alt="SRM TRP Engineering College"
                   className="h-10 sm:h-11 w-auto object-contain shrink-0"
                 />
-                <div className="h-8 w-px bg-slate-200 hidden sm:block" />
-                <div className="hidden sm:block">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
-                    <span className="font-display text-xl sm:text-2xl font-light tracking-tight text-[#111827] group-hover:text-indigo-600 transition-colors">
-                      CampusConnect
-                    </span>
-                  </div>
-                  <span className="block text-[10px] tracking-wider uppercase font-semibold text-[#64748b] pl-3.5">
-                    Student Contest Portal
-                  </span>
-                </div>
               </button>
             </div>
 

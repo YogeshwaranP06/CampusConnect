@@ -156,7 +156,7 @@ export const EventPoster: React.FC<EventPosterProps> = ({
 
       <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 border-t border-white/10 pt-2.5">
         <span className="tracking-wide">Official Event Poster</span>
-        <span className="font-mono text-[11px] text-slate-400">CampusConnect</span>
+        <span className="font-mono text-[11px] text-slate-400">CampusQuest</span>
       </div>
     </div>
   );

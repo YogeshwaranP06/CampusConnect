@@ -112,7 +112,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     if (navigator.share) {
       navigator.share({
         title: event.name,
-        text: `Check out ${event.name} organized by ${event.organizer_name} on SRM TRP CampusConnect`,
+        text: `Check out ${event.name} organized by ${event.organizer_name} on SRM TRP CampusQuest`,
         url: window.location.href,
       }).catch(() => {});
     } else {
@@ -525,7 +525,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
         {/* Fullscreen Footer Copyright */}
         <div className="py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500">
-          © {new Date().getFullYear()} SRM TRP Engineering College. All Rights Reserved. · CampusConnect Event Portal
+          © {new Date().getFullYear()} SRM TRP Engineering College. All Rights Reserved. · CampusQuest
         </div>
       </div>
     );

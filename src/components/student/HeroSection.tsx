@@ -102,7 +102,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="max-w-3xl space-y-7">
             {/* High-Contrast Headline in Dark Navy (#111827) */}
             <h1 className="font-display text-4xl sm:text-5xl lg:text-[62px] font-light tracking-tight text-[#111827] leading-[1.08] text-balance">
-              Discover Events. Build Skills. <span className="italic font-normal text-indigo-600">Create Opportunities.</span>
+              Discover Contests. Build Skills. <span className="italic font-normal text-indigo-600">Create Opportunities.</span>
             </h1>
 
             {/* Supporting Text in Muted Slate (#475569) */}
@@ -129,7 +129,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 type="submit"
                 className="px-7 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-full transition-all flex items-center justify-center gap-2 whitespace-nowrap shrink-0 shadow-sm active:scale-98 cursor-pointer"
               >
-                <span>Search Events</span>
+                <span>Search Contests</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -141,7 +141,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-full transition-all flex items-center gap-2 whitespace-nowrap shrink-0 shadow-xs cursor-pointer active:scale-98"
               >
                 <Compass className="w-4 h-4" />
-                <span>Explore All Events</span>
+                <span>Explore All Contests</span>
               </button>
               <button
                 onClick={onExploreOpportunities}

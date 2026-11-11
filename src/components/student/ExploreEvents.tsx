@@ -251,12 +251,12 @@ export const ExploreEvents: React.FC<ExploreEventsProps> = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wider text-[#64748b] block mb-1">
-            {isCoreOnly ? 'Core Engineering Track' : 'Student Opportunity Directory'}
+            {isCoreOnly ? 'Contest + Internship Track' : 'Student Opportunity Directory'}
           </span>
           <h1 className="font-display text-3xl sm:text-4xl font-light text-[#111827] tracking-tight">
             {isCoreOnly
-              ? 'Core Engineering Events & Technical Challenges'
-              : 'Explore College Events & Competitions'}
+              ? 'Contest + Internship & Technical Challenges'
+              : 'Explore College Contests & Competitions'}
           </h1>
           {isCoreOnly && (
             <p className="text-xs text-[#475569] mt-1.5 max-w-2xl font-normal">

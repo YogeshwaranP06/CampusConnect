@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
                     </span>
                   </div>
                   <span className="block text-[10px] tracking-wider uppercase font-semibold text-[#64748b] pl-3.5">
-                    Student Event Portal
+                    Student Contest Portal
                   </span>
                 </div>
               </button>
@@ -71,7 +71,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
                     : 'hover:text-[#111827]'
                   }`}
               >
-                Events
+                Contests
               </button>
               <button
                 onClick={() => handleNavClick('internships')}
@@ -91,7 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
                 }`}
               >
                 <Cpu className="w-3.5 h-3.5" />
-                <span>Core Events</span>
+                <span>Contest + Internship</span>
               </button>
               <button
                 onClick={() => handleNavClick('saved')}
@@ -116,7 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
               <button
                 onClick={() => handleNavClick('saved')}
                 className="p-2 text-[#475569] hover:text-[#111827]"
-                aria-label="View Saved Events"
+                aria-label="View Saved Contests"
               >
                 <Bookmark className="w-5 h-5" />
               </button>
@@ -146,7 +146,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
               className={`block w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${activeView === 'events' ? 'bg-slate-100 text-indigo-600 font-semibold' : 'text-[#475569]'
                 }`}
             >
-              Events
+              Contests
             </button>
             <button
               onClick={() => handleNavClick('internships')}
@@ -162,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
               }`}
             >
               <Cpu className="w-4 h-4 text-indigo-600" />
-              <span>Core Events</span>
+              <span>Contest + Internship</span>
             </button>
             <button
               onClick={() => handleNavClick('saved')}
@@ -172,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeView, onNavigate, savedCou
             >
               <span className="flex items-center gap-2">
                 <Bookmark className="w-4 h-4 text-[#64748b]" />
-                <span>Saved Events</span>
+                <span>Saved Contests</span>
               </span>
               <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded-full text-[#111827]">
                 {savedCount}

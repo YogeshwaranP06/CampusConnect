@@ -49,7 +49,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             {/* Quick Discovery */}
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-                Discover Events
+                Discover Contests
               </h4>
               <ul className="space-y-2.5 text-sm text-slate-400">
                 <li>
@@ -81,7 +81,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                     onClick={() => onNavigate('core')}
                     className="hover:text-indigo-400 text-white font-medium transition-colors cursor-pointer text-left"
                   >
-                    Core Engineering Challenges
+                    Contest + Internship
                   </button>
                 </li>
                 <li>
@@ -147,7 +147,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             {/* Coordination & Privacy */}
             <div className="space-y-4">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-                Event Coordination System
+                Contest Coordination System
               </h4>
               <p className="text-xs text-slate-400 leading-relaxed font-normal">
                 Authorized student coordinators curate master records verified by department faculty. Published opportunities stream directly to students in real time.

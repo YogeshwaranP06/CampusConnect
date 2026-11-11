@@ -1,6 +1,6 @@
 {
-  "name": "CampusConnect",
-  "description": "College events, hackathons, symposiums, workshops, and opportunities discovery platform for students and event coordinators.",
+  "name": "CampusQuest",
+  "description": "Discover. Compete. Grow. College contests, hackathons, symposiums, workshops, and opportunities discovery platform for students and coordinators.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

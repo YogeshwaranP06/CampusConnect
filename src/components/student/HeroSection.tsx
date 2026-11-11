@@ -116,7 +116,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="max-w-3xl space-y-7">
             {/* High-Contrast Headline in Dark Navy (#111827) */}
             <h1 className="font-display text-4xl sm:text-5xl lg:text-[62px] font-light tracking-tight text-[#111827] leading-[1.08] text-balance">
-              Discover Contests. Build Skills. <span className="italic font-normal text-indigo-600">Create Opportunities.</span>
+              Discover. Compete. <span className="italic font-normal text-indigo-600">Grow.</span>
             </h1>
 
             {/* Supporting Text in Muted Slate (#475569) */}

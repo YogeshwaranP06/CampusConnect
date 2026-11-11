@@ -24,10 +24,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
                   <h3 className="font-display text-2xl font-light tracking-tight text-white">
-                    CampusConnect
+                    CampusQuest
                   </h3>
                 </div>
                 <span className="block text-[10px] tracking-wider uppercase font-semibold text-indigo-400 pl-4.5 mt-0.5">
+                  Discover. Compete. Grow.
+                </span>
+                <span className="block text-[10px] tracking-wider uppercase font-medium text-slate-400 pl-4.5 mt-0.5">
                   SRM TRP Engineering College
                 </span>
               </div>
@@ -167,7 +170,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           {/* Bottom Bar */}
           <div className="mt-14 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <p>
-              © {new Date().getFullYear()} CampusConnect · SRM TRP Engineering College. All rights belong to respective institutions.
+              © {new Date().getFullYear()} CampusQuest · SRM TRP Engineering College. All rights belong to respective institutions.
             </p>
             <div className="flex items-center gap-4">
               <span className="font-mono text-[11px]">

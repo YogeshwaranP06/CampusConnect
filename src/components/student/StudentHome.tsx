@@ -156,7 +156,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               Seamless Student Journey
             </span>
             <h3 className="font-display text-2xl sm:text-3xl font-light text-[#111827] mt-1">
-              How CampusConnect Works for Students
+              How CampusQuest Works for Students
             </h3>
             <p className="text-xs text-[#475569] mt-2">
               Designed for SRM TRP Engineering College students to discover verified events and apply with confidence.

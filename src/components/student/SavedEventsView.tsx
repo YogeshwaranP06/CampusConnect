@@ -28,7 +28,7 @@ export const SavedEventsView: React.FC<SavedEventsViewProps> = ({
             Personal Shortlist
           </span>
           <h1 className="font-display text-3xl sm:text-4xl font-light text-[#111827] tracking-tight flex items-center gap-2">
-            <span>Saved Events & Opportunities</span>
+            <span>Saved Contests & Opportunities</span>
             <span className="font-mono text-base font-normal text-slate-500">
               ({savedEvents.length})
             </span>
@@ -43,7 +43,7 @@ export const SavedEventsView: React.FC<SavedEventsViewProps> = ({
           className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-full transition-colors cursor-pointer shadow-xs active:scale-98"
         >
           <Compass className="w-3.5 h-3.5" />
-          <span>Discover More Events</span>
+          <span>Discover More Contests</span>
         </button>
       </div>
 
@@ -53,7 +53,7 @@ export const SavedEventsView: React.FC<SavedEventsViewProps> = ({
             <Bookmark className="w-6 h-6 text-indigo-600" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-serif text-lg font-normal text-[#111827]">No saved events yet</h3>
+            <h3 className="font-serif text-lg font-normal text-[#111827]">No saved contests yet</h3>
             <p className="text-xs text-[#475569] max-w-sm mx-auto">
               Click the bookmark icon on any event card to save interesting hackathons, workshops, and symposiums to your personal shortlist.
             </p>
@@ -62,7 +62,7 @@ export const SavedEventsView: React.FC<SavedEventsViewProps> = ({
             onClick={onExploreEvents}
             className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-full transition-all shadow-xs cursor-pointer active:scale-98"
           >
-            <span>Explore Events Now</span>
+            <span>Explore Contests Now</span>
           </button>
         </div>
       ) : (

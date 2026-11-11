@@ -218,7 +218,7 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
               onClick={() => onNavigate('events')}
               className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-full transition-all cursor-pointer shadow-sm active:scale-98"
             >
-              Browse All Events
+              Browse All Contests
             </button>
             <button
               onClick={() => onNavigate('internships')}
